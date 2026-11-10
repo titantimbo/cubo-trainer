@@ -1,0 +1,1057 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Speedcubing trainer: timer with scrambles, beginner method, CFOP F2L/OLL/PLL with a 3D player, and a move sandbox.">
+<title>Cubo Trainer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0;font:14px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+img{max-width:100%}
+[hidden]{display:none!important}
+</style>
+<style>
+/* Layout: sticky tab bar; library views = sticky 3D player column + case/content column; timer = single centred column */
+:root{
+  --bg:#eef0f3; --panel:#ffffff; --fg:#16181d; --muted:#666c78; --line:#d8dce3;
+  --accent:#d9342b; --chip:#e4e7ec; --plate:#17191e; --arrow:#d9342b; --go:#15803d; --soft:#f6f7f9;
+  --display:"Archivo",system-ui,sans-serif; --mono:"JetBrains Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121418; --panel:#1b1e24; --fg:#eceef2; --muted:#9097a3; --line:#2c3038; --accent:#ff5a4e; --chip:#262a32; --plate:#0a0b0d; --arrow:#ff5a4e; --go:#4ade80; --soft:#171a1f; color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#121418; --panel:#1b1e24; --fg:#eceef2; --muted:#9097a3; --line:#2c3038; --accent:#ff5a4e; --chip:#262a32; --plate:#0a0b0d; --arrow:#ff5a4e; --go:#4ade80; --soft:#171a1f; color-scheme:dark}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--display);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 40px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--bg)}
+a{color:inherit}
+button{font-family:inherit}
+button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* nav */
+.nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);border-bottom:1px solid var(--line);margin-bottom:24px}
+.nav-in{max-width:1180px;margin:0 auto;display:flex;align-items:center;gap:20px;overflow-x:auto;scrollbar-width:none}
+.nav-in::-webkit-scrollbar{display:none}
+.brand{font-weight:800;font-size:16px;letter-spacing:-.01em;white-space:nowrap;display:flex;align-items:center;gap:8px;padding-block:14px}
+.brand i{display:grid;grid-template-columns:repeat(3,5px);gap:1.5px}
+.brand i b{width:5px;height:5px;border-radius:1px;background:var(--accent)}
+.brand i b:nth-child(2n){background:#ffd500}.brand i b:nth-child(3n){background:#16a34a}
+.tabs{display:flex;gap:18px;align-items:center}
+.tab{font-weight:700;font-size:14px;color:var(--muted);text-decoration:none;padding:16px 0 14px;border-bottom:2px solid transparent;white-space:nowrap}
+.tab.on{color:var(--fg);border-color:var(--accent)}
+.tabsep{font:600 10px var(--mono);letter-spacing:.1em;color:var(--muted);text-transform:uppercase;border-left:1px solid var(--line);padding-left:18px}
+
+main{max-width:1180px;margin:0 auto}
+.view[hidden]{display:none!important}
+h1.vt{margin:0;font-size:34px;font-weight:800;letter-spacing:-.02em;line-height:1.05;text-wrap:balance}
+.lede{margin:8px 0 0;color:var(--muted);font-size:15px;line-height:1.55;max-width:62ch}
+.eyebrow{font:600 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+
+/* library layout */
+.lib{display:grid;grid-template-columns:minmax(0,450px) minmax(0,1fr);gap:32px;align-items:start}
+.slot{position:sticky;top:calc(env(safe-area-inset-top,0px) + 72px);min-width:0}
+@media (max-width:920px){.lib{grid-template-columns:minmax(0,1fr)}.slot{position:static}}
+.side{display:flex;flex-direction:column;gap:20px;min-width:0}
+
+/* player */
+.player{display:flex;flex-direction:column;gap:12px}
+.phead{display:flex;gap:14px;align-items:center;min-height:80px}
+.phead .dia{width:80px;flex:none}
+.phead .dia:empty{display:none}
+.phead .dia img{width:80px;height:80px;display:block;border-radius:10px;background:var(--soft)}
+.phead .meta{flex:1;min-width:0}
+.phead h2{margin:2px 0 0;font-size:26px;font-weight:800;letter-spacing:-.02em;line-height:1.1}
+.phead .alg{font-family:var(--mono);font-size:12.5px;color:var(--muted);margin-top:5px;line-height:1.5;overflow-wrap:anywhere}
+.pnav{display:flex;gap:6px;flex:none}
+.stage{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;aspect-ratio:5/4;max-width:100%}
+#cv{width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+.hud{position:absolute;left:14px;top:12px;right:14px;font-family:var(--mono);font-size:12px;color:var(--muted)}
+.big{position:absolute;right:16px;bottom:10px;font-weight:800;font-size:48px;line-height:1;color:var(--accent)}
+.moves{display:flex;flex-wrap:wrap;gap:5px}
+.mv{border:1px solid transparent;background:var(--chip);color:var(--fg);font:600 14px var(--mono);padding:5px 8px;border-radius:7px;cursor:pointer;min-width:34px}
+.mv.done{color:var(--muted);background:transparent;border-color:var(--line)}
+.mv.cur{background:var(--accent);color:#fff}
+.mv.rot{font-style:italic}
+.seglab{font:700 10.5px var(--display);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);align-self:center;margin-right:2px}
+.brk{flex-basis:100%;height:0}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.t{font:700 13.5px var(--display);background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:9px;padding:9px 12px;cursor:pointer}
+.t:hover{border-color:var(--muted)}
+.t.primary{background:var(--fg);color:var(--bg);border-color:var(--fg);min-width:92px}
+.t.sq{padding:7px 11px}
+.t.on{border-color:var(--go);color:var(--go)}
+label.spd{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+input[type=range]{accent-color:var(--accent);width:100px}
+
+/* case grids */
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.modes{display:inline-flex;background:var(--chip);border-radius:10px;padding:3px;gap:2px;flex-wrap:wrap}
+.modes button{font:700 13px var(--display);border:0;background:transparent;color:var(--muted);padding:7px 12px;border-radius:8px;cursor:pointer}
+.modes button[aria-pressed="true"]{background:var(--panel);color:var(--fg);box-shadow:0 1px 2px rgba(0,0,0,.15)}
+.progress{font:600 12px var(--mono);color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px}
+.pk{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:6px 6px 5px;cursor:pointer;color:var(--fg);display:flex;flex-direction:column;align-items:center;gap:3px;font:700 12px var(--display);min-width:0}
+.pk svg,.pk img{width:100%;max-width:84px;aspect-ratio:1;display:block}
+.pk img{border-radius:8px;background:var(--soft)}
+.pk .ph{width:100%;max-width:84px;aspect-ratio:1;border-radius:8px;background:var(--soft)}
+.pk.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.pk:hover{border-color:var(--muted)}
+.pk small{font:500 10px var(--mono);color:var(--muted)}
+.pk.learned::after{content:"";position:absolute;top:6px;right:6px;width:8px;height:8px;border-radius:50%;background:var(--go)}
+.pk[hidden]{display:none}
+
+/* prose cards */
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px;min-width:0}
+.card h3{margin:0 0 6px;font-size:17px;font-weight:800;letter-spacing:-.01em}
+.card p,.card li{font-size:14px;line-height:1.6;color:var(--muted);margin:0}
+.card p+p{margin-top:8px}
+.card ul,.card ol{margin:6px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
+.card b{color:var(--fg)}
+code,.code{font-family:var(--mono);font-size:12.5px;color:var(--fg);background:var(--chip);padding:1px 5px;border-radius:4px;white-space:nowrap}
+.cols2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+@media (max-width:640px){.cols2{grid-template-columns:minmax(0,1fr)}}
+
+/* beginner steps */
+.step{display:grid;grid-template-columns:44px minmax(0,1fr);gap:4px 14px}
+.step .num{grid-row:span 3;font:800 34px/1 var(--display);color:var(--accent);font-variant-numeric:tabular-nums}
+.step h3{margin:2px 0 0}
+.step h3 span{color:var(--muted);font-weight:600;font-size:14px;margin-left:6px}
+.demos{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;margin-top:12px}
+.demo{display:grid;grid-template-columns:60px minmax(0,1fr);gap:12px;align-items:center;background:var(--soft);border:1px solid var(--line);color:var(--fg);border-radius:10px;padding:8px 10px 8px 8px;cursor:pointer;text-align:left;font-family:var(--display);transition:border-color .12s,transform .12s}
+.demo:hover{border-color:var(--muted);transform:translateY(-1px)}
+.demo.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent);background:var(--panel)}
+.dth{width:60px;height:60px;display:block}
+.dth svg,.dth img,.dth .ph{width:60px;height:60px;display:block;border-radius:8px;background:var(--panel)}
+.dtx{display:flex;flex-direction:column;gap:2px;min-width:0}
+.dtx b{font-size:14px;font-weight:700;line-height:1.25}
+.dal{font:500 11px/1.45 var(--mono);color:var(--muted);overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.dmeta{font:700 10.5px var(--mono);letter-spacing:.04em;color:var(--accent);margin-top:2px}
+.phead .dia svg{width:80px;height:80px;display:block}
+.formula{margin-top:8px;font:600 14px var(--mono);color:var(--fg)}
+
+/* notation */
+.ngroup h3{margin:0 0 4px}
+.nchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.nchip{font:600 15px var(--mono);background:var(--chip);border:1px solid transparent;color:var(--fg);border-radius:8px;padding:7px 11px;cursor:pointer;min-width:44px}
+.nchip.on{background:var(--accent);color:#fff}
+
+/* sandbox */
+.flabel{display:block;font:600 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+#mvIn{width:100%;box-sizing:border-box;resize:vertical;font:600 17px/1.5 var(--mono);color:var(--fg);background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+#mvIn:focus{outline:2px solid var(--accent);outline-offset:1px}
+#mvIn.bad{border-color:var(--accent)}
+.ferr{font-size:13px;color:var(--accent);min-height:18px;margin-top:6px}
+.fnote{font-size:12.5px!important;margin-top:8px!important}
+.keypad{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}
+.keypad button{font:700 15px var(--mono);background:var(--chip);color:var(--fg);border:1px solid transparent;border-radius:8px;padding:9px 0;cursor:pointer;min-width:0}
+.keypad button:hover{border-color:var(--muted)}
+.keypad button:active{background:var(--accent);color:#fff}
+.keypad .kh{grid-column:1/-1;font:600 10.5px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:4px}
+.hist{font:600 14px/1.6 var(--mono);overflow-wrap:anywhere;color:var(--fg);max-height:160px;overflow:auto}
+
+/* timer */
+.tw{max-width:1000px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+.scr{display:flex;gap:12px;align-items:center;flex-wrap:wrap;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.scr .txt{flex:1 1 320px;min-width:0;font:600 clamp(15px,2.2vw,19px)/1.55 var(--mono);word-spacing:.25em;overflow-wrap:anywhere}
+.scr .acts{display:flex;gap:8px;flex-wrap:wrap}
+.pad{user-select:none;-webkit-user-select:none;touch-action:none;text-align:center;padding-block:28px 22px;border-radius:16px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.clock{font:800 clamp(72px,17vw,150px)/1 var(--display);font-variant-numeric:tabular-nums;letter-spacing:-.035em;transition:color .08s}
+.clock.hold{color:var(--accent)} .clock.ready{color:var(--go)} .clock.insp{color:var(--muted)}
+.hint{margin-top:10px;font-size:13px;color:var(--muted)}
+.tset{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.tset label{display:flex;gap:6px;align-items:center;cursor:pointer}
+.tset input{accent-color:var(--accent)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:8px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-width:0}
+.stat .k{font:600 10.5px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.stat .v{font:800 22px var(--display);font-variant-numeric:tabular-nums;margin-top:3px}
+.tcols{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:760px){.tcols{grid-template-columns:minmax(0,1fr)}}
+.solves{max-height:440px;overflow:auto;display:flex;flex-direction:column}
+.srow{display:grid;grid-template-columns:38px minmax(0,1fr) 70px auto;gap:10px;align-items:center;padding:7px 2px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+.srow:last-child{border-bottom:0}
+.srow .i{font:500 12px var(--mono);color:var(--muted)}
+.srow .tm{font:800 17px var(--display)}
+.srow .tm small{font:500 11px var(--mono);color:var(--muted);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.srow .a5{font:500 12px var(--mono);color:var(--muted);text-align:right}
+.srow .ops{display:flex;gap:4px}
+.srow .ops button{font:700 11px var(--mono);background:var(--chip);color:var(--fg);border:1px solid transparent;border-radius:6px;padding:4px 6px;cursor:pointer}
+.srow .ops button.on{border-color:var(--accent);color:var(--accent)}
+.empty{font-size:14px;color:var(--muted);padding:12px 0}
+.net{width:100%;max-width:340px;display:block}
+.trend{width:100%;display:block}
+.chead{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:8px}
+.chead h3{margin:0}
+.legend{display:flex;gap:12px;font:500 11px var(--mono);color:var(--muted)}
+.legend i{display:inline-block;width:12px;height:3px;border-radius:2px;vertical-align:middle;margin-right:4px}
+body.running .nav, body.running .hide-run{opacity:0;pointer-events:none;transition:opacity .2s}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <marker id="ah" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" style="fill:var(--arrow)"/></marker>
+</defs></svg>
+
+<header class="nav">
+  <div class="nav-in">
+    <div class="brand"><i><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b></i>Cubo Trainer</div>
+    <nav class="tabs" aria-label="Sections">
+      <a class="tab" href="#timer" data-v="timer">Timer</a>
+      <a class="tab" href="#beginner" data-v="beginner">Beginner</a>
+      <span class="tabsep">CFOP</span>
+      <a class="tab" href="#cfop" data-v="cfop">Overview</a>
+      <a class="tab" href="#f2l" data-v="f2l">F2L</a>
+      <a class="tab" href="#oll" data-v="oll">OLL</a>
+      <a class="tab" href="#pll" data-v="pll">PLL</a>
+      <span class="tabsep">Ref</span>
+      <a class="tab" href="#notation" data-v="notation">Notation</a>
+      <a class="tab" href="#moves" data-v="moves">Moves</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+<!-- ============ TIMER ============ -->
+<section class="view" id="v-timer">
+  <div class="tw">
+    <div class="scr hide-run">
+      <div class="txt" id="scrTxt"></div>
+      <div class="acts">
+        <button class="t" id="scrPrev" title="Previous scramble">◀</button>
+        <button class="t" id="scrNew">New scramble</button>
+        <button class="t" id="scrCopy">Copy</button>
+      </div>
+    </div>
+
+    <div class="pad" id="pad" role="button" tabindex="0" aria-label="Timer: hold space or press and hold here, release to start">
+      <div class="clock" id="clock">0.00</div>
+      <div class="hint hide-run" id="hint">Hold <b>space</b> (or press and hold here) until the time turns green, then release. Any key stops.</div>
+    </div>
+
+    <div class="tset hide-run">
+      <label><input type="checkbox" id="optInsp"> 15 s inspection (WCA: +2 after 15 s, DNF after 17 s)</label>
+      <label><input type="checkbox" id="optHide"> Hide time while solving</label>
+    </div>
+
+    <div class="stats hide-run" id="stats"></div>
+
+    <div class="tcols hide-run">
+      <div class="card">
+        <div class="chead"><h3>Solves</h3><button class="t sq" id="clearBtn">Clear session</button></div>
+        <div class="solves" id="solves"></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:16px;min-width:0">
+        <div class="card">
+          <div class="chead"><h3>Scramble preview</h3><span class="eyebrow">White top · green front</span></div>
+          <svg class="net" id="net" viewBox="0 0 252 190" role="img" aria-label="Scrambled cube net"></svg>
+        </div>
+        <div class="card">
+          <div class="chead"><h3>Trend</h3><div class="legend"><span><i style="background:var(--muted)"></i>single</span><span><i style="background:var(--accent)"></i>ao5</span></div></div>
+          <svg class="trend" id="trend" viewBox="0 0 320 120" role="img" aria-label="Recent solve times"></svg>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ BEGINNER ============ -->
+<section class="view lib" id="v-beginner" hidden>
+  <div class="slot"></div>
+  <div class="side">
+    <div>
+      <div class="eyebrow">Método básico · 8 steps</div>
+      <h1 class="vt">Beginner method</h1>
+      <p class="lede">Layer by layer: white cross, white corners, middle layer, then the yellow side. The cube is held with yellow on top and white on the bottom. Each situation shows the cube as you'd see it at that step: pieces you haven't reached yet are grey. Pick one to watch it solved.</p>
+    </div>
+    <div id="begSteps" style="display:flex;flex-direction:column;gap:12px"></div>
+  </div>
+</section>
+
+<!-- ============ CFOP OVERVIEW ============ -->
+<section class="view" id="v-cfop" hidden>
+  <div style="display:flex;flex-direction:column;gap:20px;max-width:980px">
+    <div>
+      <div class="eyebrow">Método Fridrich · 119 formulas</div>
+      <h1 class="vt">CFOP overview</h1>
+      <p class="lede">Cross, F2L, OLL, PLL. Where the beginner method needs about a minute, CFOP is the method behind sub-10 second solves. The full set is 41 F2L + 57 OLL + 21 PLL formulas.</p>
+    </div>
+    <div class="cols2">
+      <div class="card"><h3>1 · Cross</h3><p>Solve the white cross on the bottom in one go, directly in its final position, with no daisy. Plan it during the 15 s inspection: a cross never needs more than 8 moves.</p></div>
+      <div class="card"><h3>2 · F2L <span class="eyebrow">41 cases</span></h3><p>Pair each white corner with its middle-layer edge on top, then insert the pair in one formula. Four pairs finish the first two layers. <a href="#f2l">Open F2L →</a></p></div>
+      <div class="card"><h3>3 · OLL <span class="eyebrow">57 cases</span></h3><p>Make the whole top yellow in one formula. Start with Casos 01–07 (cross already done), then the rest. <a href="#oll">Open OLL →</a></p></div>
+      <div class="card"><h3>4 · PLL <span class="eyebrow">21 cases</span></h3><p>Move the top pieces into place in one formula and finish the cube. <a href="#pll">Open PLL →</a></p></div>
+    </div>
+    <div class="card">
+      <h3>Learning order (from cubovelocidade)</h3>
+      <ol>
+        <li>Practise the cross until you can do it directly in white, in one go, without pausing.</li>
+        <li>Learn the first 7 OLL cases (cross already done), one per day, keeping the beginner method for the rest.</li>
+        <li>Learn the 41 F2L cases, one or two per day or one block per week.</li>
+        <li>Learn the 21 PLL cases, one per day or two per week, splitting long formulas into blocks.</li>
+        <li>Finally, the remaining 50 OLL cases.</li>
+      </ol>
+      <p style="margin-top:10px">Expect to be slower at first. The site's author took about six months to learn every formula.</p>
+    </div>
+    <div class="cols2">
+      <div class="card">
+        <h3>2-look OLL (10 formulas)</h3>
+        <p><b>Look 1 · yellow cross.</b> Line held horizontally: <code>F R U R' U' F'</code> (Caso 09). L held at the back-left: <code>Fw R U R' U' Fw'</code> (Caso 12). Dot: do one, then the other.</p>
+        <p><b>Look 2 · yellow corners.</b> Casos 01–07, the seven cases with the cross already done.</p>
+      </div>
+      <div class="card">
+        <h3>2-look PLL (6 formulas)</h3>
+        <p><b>Look 1 · corners.</b> Headlights on one side: hold them at the back and do an A-perm. No headlights: Y-perm.</p>
+        <p><b>Look 2 · edges.</b> U horário, U anti-horário, H or Z. The PLL page has a 2-look switch that animates this route for every case. <a href="#pll">Open PLL →</a></p>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Practice habits</h3>
+      <ul>
+        <li>Use the timer with inspection on. Plan the full cross and try to track where the first F2L pair is.</li>
+        <li>Look ahead: turn slowly enough that you're finding the next pair while inserting the current one.</li>
+        <li>Mark cases as learned on the F2L, OLL and PLL pages to track your progress.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============ F2L ============ -->
+<section class="view lib" id="v-f2l" hidden>
+  <div class="slot"></div>
+  <div class="side">
+    <div>
+      <div class="eyebrow">F2L · 41 cases</div>
+      <h1 class="vt">First two layers</h1>
+      <p class="lede">Each case pairs a white corner with its edge and inserts them together. Thumbnails grey out the last layer so the pair stands out. Formulas that start with <code>y</code> or <code>Dw</code> re-grip the cube first, and the animation shows it.</p>
+    </div>
+    <div class="toolbar"><span class="progress" id="prog-f2l"></span></div>
+    <div class="grid" id="g-f2l"></div>
+  </div>
+</section>
+
+<!-- ============ OLL ============ -->
+<section class="view lib" id="v-oll" hidden>
+  <div class="slot"></div>
+  <div class="side">
+    <div>
+      <div class="eyebrow">OLL · 57 cases</div>
+      <h1 class="vt">Orient the last layer</h1>
+      <p class="lede">One formula makes the whole top yellow. Diagrams show the top face with the back edge up; yellow stickers on the side strips face outward.</p>
+    </div>
+    <div class="toolbar">
+      <div class="modes" role="group" aria-label="Filter OLL">
+        <button data-f="all" aria-pressed="true">All 57</button>
+        <button data-f="cross" aria-pressed="false">Cross done (01–07)</button>
+        <button data-f="todo" aria-pressed="false">Not learned</button>
+      </div>
+      <span class="progress" id="prog-oll"></span>
+    </div>
+    <div class="grid" id="g-oll"></div>
+  </div>
+</section>
+
+<!-- ============ PLL ============ -->
+<section class="view lib" id="v-pll" hidden>
+  <div class="slot"></div>
+  <div class="side">
+    <div>
+      <div class="eyebrow">PLL · 21 cases</div>
+      <h1 class="vt">Permute the last layer</h1>
+      <p class="lede">The top is already yellow; one formula moves the pieces home. Arrows show where pieces go. In 2-look mode each case is solved with corners first (A or Y), then edges (U, H or Z).</p>
+    </div>
+    <div class="toolbar">
+      <div class="modes" role="group" aria-label="Solve mode">
+        <button id="mFull" aria-pressed="true">Full PLL</button>
+        <button id="mTwo" aria-pressed="false">2-look PLL</button>
+      </div>
+      <span class="progress" id="prog-pll"></span>
+    </div>
+    <div class="grid" id="g-pll"></div>
+  </div>
+</section>
+
+<!-- ============ NOTATION ============ -->
+<section class="view lib" id="v-notation" hidden>
+  <div class="slot"></div>
+  <div class="side">
+    <div>
+      <div class="eyebrow">Movimentos</div>
+      <h1 class="vt">Notation</h1>
+      <p class="lede">A letter turns that face clockwise as if you were looking straight at it. <code>'</code> means anticlockwise, <code>2</code> means a half turn. Tap any move to watch it.</p>
+    </div>
+    <div id="notGroups" style="display:flex;flex-direction:column;gap:12px"></div>
+  </div>
+</section>
+
+<!-- ============ MOVES (sandbox) ============ -->
+<section class="view lib" id="v-moves" hidden>
+  <div class="slot"></div>
+  <div class="side">
+    <div>
+      <div class="eyebrow">Sandbox</div>
+      <h1 class="vt">Write moves</h1>
+      <p class="lede">Type any sequence and the cube performs it, continuing from where it is. Spaces are optional, so <code>RUR'U'</code> works. Wide moves can be written <code>Rw</code> or <code>r</code>.</p>
+    </div>
+    <div class="card">
+      <label class="flabel" for="mvIn">Moves</label>
+      <textarea id="mvIn" rows="3" spellcheck="false" autocomplete="off" autocapitalize="off" placeholder="R U R' U' R' F R2 U' R' U' R U R' F'"></textarea>
+      <div class="ferr" id="mvErr" role="alert"></div>
+      <div class="bar" style="margin-top:10px">
+        <button class="t primary" id="pgRun" title="Ctrl/Cmd + Enter">▶ Animate</button>
+        <button class="t" id="pgNow">Apply instantly</button>
+        <button class="t" id="pgCase" title="Set the cube to the position these moves solve">Show as a case</button>
+      </div>
+      <p class="fnote">“Show as a case” starts from the position your algorithm solves, so you can check an algorithm you're learning.</p>
+    </div>
+    <div class="card">
+      <div class="chead"><h3>Keypad</h3><span class="eyebrow">Tap to turn now</span></div>
+      <div class="keypad" id="keypad"></div>
+    </div>
+    <div class="card">
+      <div class="chead"><h3>Cube history</h3>
+        <div style="display:flex;gap:6px;flex-wrap:wrap"><button class="t sq" id="pgUndo">Undo</button><button class="t sq" id="pgScr">Scramble</button><button class="t sq" id="pgCopy">Copy</button><button class="t sq" id="pgReset">Reset to solved</button></div></div>
+      <div class="hist" id="pgHist">—</div>
+    </div>
+  </div>
+</section>
+</main>
+
+<!-- shared player, moved into the active view's .slot -->
+<div class="player" id="player">
+  <div class="phead">
+    <div class="dia" id="pDia"></div>
+    <div class="meta">
+      <div class="eyebrow" id="pEye"></div>
+      <h2 id="pName"></h2>
+      <div class="alg" id="pAlg"></div>
+    </div>
+    <div class="pnav">
+      <button class="t sq" id="prevc" title="Previous ([)" aria-label="Previous">‹</button>
+      <button class="t sq" id="nextc" title="Next (])" aria-label="Next">›</button>
+    </div>
+  </div>
+  <div class="stage">
+    <canvas id="cv"></canvas>
+    <div class="hud" id="hud"></div>
+    <div class="big" id="big">—</div>
+  </div>
+  <div class="moves" id="moves"></div>
+  <div class="bar">
+    <button class="t" id="reset" title="Reset (R)">⟲</button>
+    <button class="t" id="back" title="Step back (←)">◀</button>
+    <button class="t primary" id="play" title="Play/pause (Space)">▶ Play</button>
+    <button class="t" id="fwd" title="Step forward (→)">▶</button>
+    <button class="t" id="view">Top view</button>
+    <label class="spd" for="spd">Speed <input type="range" id="spd" min="0.3" max="3" step="0.1" value="1"></label>
+    <button class="t" id="learn" hidden>Mark learned</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+"use strict";
+// =====================================================================
+// Move model. Axes: x right, y up, z toward the viewer (front).
+// =====================================================================
+const DEF={R:[0,[1],-1],L:[0,[-1],1],M:[0,[0],1],Rw:[0,[1,0],-1],Lw:[0,[-1,0],1],x:[0,[-1,0,1],-1],
+  U:[1,[1],-1],D:[1,[-1],1],E:[1,[0],1],Uw:[1,[1,0],-1],Dw:[1,[-1,0],1],y:[1,[-1,0,1],-1],
+  F:[2,[1],-1],B:[2,[-1],1],S:[2,[0],-1],Fw:[2,[1,0],-1],Bw:[2,[-1,0],1],z:[2,[-1,0,1],-1]};
+const toks=s=>s.replace(/[’‘`]/g,"'").trim().split(/\s+/).filter(Boolean);
+function parse(m){const base=m.replace(/['2]+$/,''),suf=m.slice(base.length);const [ax,ls,s0]=DEF[base];
+  const n=suf.includes('2')?2:1;const s=(suf.includes("'")&&n===1)?-s0:s0;return{ax,ls,s,n}}
+const inv=m=>{const base=m.replace(/['2]+$/,''),suf=m.slice(base.length);return suf.includes('2')?base+'2':suf.includes("'")?base:base+"'"};
+const invSeq=a=>[...a].reverse().map(inv);
+const isRot=m=>/^[xyz]/.test(m);
+function R(ax,s,[x,y,z]){return ax===0?[x,-s*z+0,s*y+0]:ax===1?[s*z+0,y,-s*x+0]:[-s*y+0,s*x+0,z]}
+const eq=(a,b)=>a[0]===b[0]&&a[1]===b[1]&&a[2]===b[2];
+const NORM={U:[0,1,0],D:[0,-1,0],F:[0,0,1],B:[0,0,-1],R:[1,0,0],L:[-1,0,0]};
+function simNew(){const c=[];for(let x=-1;x<=1;x++)for(let y=-1;y<=1;y++)for(let z=-1;z<=1;z++){if(!x&&!y&&!z)continue;
+  const p=[x,y,z],st=[];for(const f in NORM){const n=NORM[f];if([0,1,2].some(i=>n[i]&&p[i]===n[i]))st.push({n:[...n],f})}
+  c.push({home:[...p],pos:[...p],st})}return c}
+function simMove(c,m){const {ax,ls,s,n}=parse(m);for(let k=0;k<n;k++)for(const cb of c)if(ls.includes(cb.pos[ax])){cb.pos=R(ax,s,cb.pos);cb.st.forEach(t=>t.n=R(ax,s,t.n))}}
+const simApply=(c,seq)=>{seq.forEach(m=>simMove(c,m));return c};
+const clone=c=>c.map(cb=>({home:cb.home,pos:[...cb.pos],st:cb.st.map(t=>({n:[...t.n],f:t.f}))}));
+const cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
+const isCorner=h=>Math.abs(h[0])+Math.abs(h[1])+Math.abs(h[2])===3;
+function relOK(c,filt){ // solved relative to its own centres
+  const u=c.find(cb=>eq(cb.home,[0,1,0])).pos,f=c.find(cb=>eq(cb.home,[0,0,1])).pos,r=cross(u,f);
+  const map=h=>[0,1,2].map(i=>h[0]*r[i]+h[1]*u[i]+h[2]*f[i]+0);
+  return c.every(cb=>!filt(cb.home)||(eq(map(cb.home),cb.pos)&&cb.st.every(t=>eq(map(NORM[t.f]),t.n))))}
+function stAt(c,p,n){for(const cb of c)if(eq(cb.pos,p))for(const t of cb.st)if(eq(t.n,n))return t.f;return null}
+
+// =====================================================================
+// Data (algorithms exactly as on cubovelocidade.com.br)
+// =====================================================================
+const PLL_RAW=[
+ ['u-horario','U horário',"R' U R' U' R' U' R' U R U R2"],
+ ['u-anti','U anti-horário',"R2 U' R' U' R U R U R U' R"],
+ ['a-horario','A horário',"x R' U R' D2 / R U' R' D2 R2 x'"],
+ ['a-anti','A anti-horário',"x R2' D2 R U R' / D2 R U' R x'"],
+ ['h','H',"M2 U M2 U2 M2 U M2"],
+ ['z','Z',"M2 U M2 U M' U2 M2 U2 M'"],
+ ['t','T',"R U R' U' R' F / R2 U' R' U' R U R' F'"],
+ ['f','F',"R' U' F' R U R' U' R' F / R2 U' R' U' R U R' U R"],
+ ['y','Y',"F R U' R' U' R U R' F' / R U R' U' R' F R F'"],
+ ['e','E',"x' R U' R' D R U R' D' / R U R' D R U' R' D' x"],
+ ['v','V',"R' U R' Dw' R' F' / R2 U' R' U R' F R F"],
+ ['r1','R1',"R U' R' U' R U R D R' / U' R D' R' U2 R' U'"],
+ ['r2','R2',"R' U2 R U2' R' F / R U R' U' R' F' R2 U'"],
+ ['j1','J1',"x R2 F R F' R U2 / Rw' U Rw U2 x'"],
+ ['j2','J2',"R U R' F' R U R' / U' R' F R2 U' R' U'"],
+ ['n1','N1',"R U R' U R U R' F' R U R' / U' R' F R2 U' R' U2 R U' R'"],
+ ['n2','N2',"R' U R U' R' F' U' F / R U R' F R' F' R U' R"],
+ ['g1','G1',"R2' Uw R' U R' U' R Uw' / R2 y' R' U R"],
+ ['g2','G2',"R' U' R U D' R2 U R' U R / U' R U' R2 D U'"],
+ ['g3','G3',"R2 U' R U' R U R' / U R2 D' U R U' R' D U'"],
+ ['g4','G4',"R U R' y' R2 Uw' / R U' R' U R' Uw R2"],
+];
+const OLL_RAW=["R U R' U R U2 R'","R' U' R U' R' U2 R","R U R' U R U' R' U R U2 R'","R U2 R2 U' R2 U' R2 U2 R",
+"Rw U R’ U’ Rw’ F R F’","F' Rw U R' U' Rw' F R","R2 D' R U2 R' D R U2 R","R U R' U' R' F R F'","F R U R' U' F'",
+"Rw U2 R' U' R U' Rw'","Rw' U2 R U R' U Rw","Fw R U R' U' Fw'","Fw' L' U' L U Fw","S R U R' U' R' F R Fw'",
+"R' U' F U R U' R' F' R","Rw U R' U' M U R U' R'","R U R' U' M' U R U' Rw'","R' U' R' F R F' U R",
+"R U R2 U' R' F R U R U' F'","F R U' R' U' R U R' F'","R U2 R2 F R F' R U2 R'","R U R' U R' F R F' R U2 R'",
+"R U R' U' R' F R2 U R' U' F'","Rw U R' U R U2 Rw'","Rw' U' R U' R' U2 Rw","Rw' R2 U R' U R U2 R' U M'",
+"F R U R' U' F' U / F R U R' U' F'","Rw' U' R U' R' U / R U' R' U2 Rw","Rw U R' U R U' / R' U R U2 Rw'",
+"Rw U' Rw2 U Rw2 / U Rw2 U' Rw","Rw' U Rw2 U' Rw2 / U' Rw2 U Rw'","F' L' U' L U L' U' L U F","F R U R' U' R U R' U' F'",
+"R U R' U R U' R' U' R' F R F'","L' U' L U' L' U L U L F' L' F","R' F R U R' F' R F U' F'",
+"Rw U' Rw' U' / Rw U Rw' F' U F","Rw' U' Rw R' U' R U / Rw' U Rw","Rw U Rw' R U R' U' / Rw U' Rw'",
+"Fw R U R' U' R U R' U' Fw'","Rw U Rw' U R U' R' U / R U' R' Rw U' Rw'","R U R' U R Dw' R U' R' F'",
+"R U2 R2 U' R U' R' U2 F R F'","R' U' R U' R' U2 / R F R U R' U' F'","R U R' U R U2 R' F / R U R' U' F'",
+"M U R U R' U' R' F R F' M'","F U R U2 R' U' R U2 R' U' F'","L F' L' U' L U F U' L'","R' F R U R' U' F' U R",
+"Rw U R' U R U2 / Rw2 U' R U' R' U2 Rw","M U R U R' U' M' R' F R F'","Fw R U R' U' / Fw' U' F R U R' U' F'",
+"Fw R U R' U' / Fw' U F R U R' U' F'","R U2 R2' F R F' U2' R' F R F'","F R U R' U' S R U R' U' Fw'",
+"R U R' U R' F / R F' U2 R' F R F'","M U R U R' U' / M2 U R U' Rw'"];
+const F2L_RAW=["R U R'","y L' U' L","y U' L' U L","U R U' R'","U R U' R' U' F' U F","y U' L' U L U F U' F'",
+"R U' R' Dw / R' U2 R U2' R' U R","U R U R' U2 R U R'","U' R U' R' U2 R U' R'","U2 R' F R F' U2 R U R'",
+"U' R U R' U F' U' F","R U R' U' R U R' U' R U R'","U' R' F R F' R U' R'","R U' R' U R U' R' U2 R U' R'",
+"U' R U2 R' U F' U' F","U' R U' R' U R U R'","y' U R' U R U' R' U' R","R U' R' U2 F' U' F",
+"R U R' U2 R U' R' U R U' R'","R U2 R' U' R U R'","y' R' U2 R U R' U' R","F U R U' R' F' R U' R'",
+"R U R' U2 R U R' U' R U R'","R U R' U R U' R'","y' L' U' L U' L' U L","R U2 R' U R U' R'",
+"y' L' U2 L U' L' U L","R U' R' U R U' R'","R U R' U' F R' F' R","R U R' U' R U R'","R' F R F' R' F R F'",
+"R U R' U2 R U' R' U R U R'","R U R' U' R U2 R' U' R U R'","R U' R' Rw U' Rw' / U2 Rw U Rw'",
+"Rw U' Rw' U2 / Rw U Rw' R U R'","Dw R' U2 R U2 R' U R","U' R U2 R' U2 R U' R'","Dw R' U' R U2 R' U R",
+"U' R U R' U2 R U' R'","U' R U R' U R U R'","U' R U' R' U F' U' F"];
+
+const pad2=n=>String(n).padStart(2,'0');
+function mkCase(kind,id,name,str){const lines=str.split(' / ').map(toks);const alg=lines.flat();
+  return {id,kind,name,lines,alg,setup:invSeq(alg),text:lines.map(l=>l.join(' ')).join('  ·  ')}}
+const PLL=PLL_RAW.map(([k,n,s])=>Object.assign(mkCase('pll','pll-'+k,n,s),{k}));
+const OLL=OLL_RAW.map((s,i)=>mkCase('oll','oll-'+pad2(i+1),'Caso '+pad2(i+1),s));
+const F2L=F2L_RAW.map((s,i)=>mkCase('f2l','f2l-'+pad2(i+1),'Caso '+pad2(i+1),s));
+const pllBy=k=>PLL.find(c=>c.k===k);
+
+// Beginner method. Demo = start state (solved + setup) and the moves that solve that situation.
+const FRU="F R U R' U' F'",SUNE="R U R' U R U2 R'";
+function demoInv(name,alg,base=''){const a=toks(alg);return{name,setup:[...toks(base),...invSeq(a)],segs:[{label:'',moves:a}],alg:alg}}
+function demoSeq(name,fromOll,seq,formula){const s=toks(seq),segs=[];let i=0;const f=toks(formula);
+  while(i<s.length){if(isRot(s[i])){segs.push({label:'Re-grip',moves:[s[i]]});i++}else{segs.push({label:'Formula',moves:s.slice(i,i+f.length)});i+=f.length}}
+  return{name,setup:OLL[fromOll-1].setup,segs,alg:seq}}
+const BEG=[
+ {t:'Preparar a cruz',en:'Make the daisy',m:'cross',d:'Bring the four white edges up around the yellow centre, white facing up. There is no formula; these are the four situations you meet.',
+  demos:[demoInv('Edge in the middle layer','R','F2 R2 B2 L2'),demoInv('Edge on the bottom, front',"F' R",'F2 R2 B2 L2'),demoInv('Edge on top, white sideways',"F U' R",'F2 R2 B2 L2'),demoInv('Slot taken: free it first',"U' R",'F2 R2 B2 L2')]},
+ {t:'Finalizar a cruz',en:'Finish the cross',m:'cross',d:'Turn the top (U, U\' or U2) until a white edge\'s side colour matches its centre, then F2 drops it to the bottom. Repeat for all four.',
+  demos:[demoInv('Already aligned','F2','R2 B2 L2'),demoInv('Align with U','U F2','R2 B2 L2'),demoInv('Align with U2','U2 F2','R2 B2 L2'),
+   {name:'Whole cross from the daisy',setup:toks('F2 U2 R2 U B2 L2'),alg:'U F2 · U2 R2 · U B2 · L2',
+    segs:[{label:'Red',moves:['U','F2']},{label:'Green',moves:['U2','R2']},{label:'Orange',moves:['U','B2']},{label:'Blue',moves:['L2']}]}]},
+ {t:'Primeira camada',en:'White corners',m:'layer1',f:"R U R'  ·  L' U' L",d:'Put the white corner above its slot. White facing right: R U R\'. White facing left: L\' U\' L. White facing up: lift it out and re-insert.',
+  demos:[demoInv('White facing right',"R U R'"),demoInv('White facing left',"L' U' L"),demoInv('White facing up',"R U2 R' U' R U R'")]},
+ {t:'Segunda camada',en:'Middle layer',m:'layer2',d:'Line the top edge up with its centre in front. If it belongs on the right, use the first formula; on the left, the second. A wrong edge stuck in the middle comes out with either formula.',
+  demos:[demoInv('Edge goes right',"U R U' R' U' F' U F"),demoInv('Edge goes left',"U' L' U L U F U' F'")]},
+ {t:'Cruz amarela',en:'Yellow cross',m:'oll',f:FRU,d:'One formula for every case; only the way you hold the cube changes. Line: hold it horizontal. L: hold it at the back-left.',
+  demos:[demoSeq('Ponto (dot)',54,"F R U R' U' F' F R U R' U' F' y F R U R' U' F'",FRU),demoSeq('Letra L',12,"F R U R' U' F' y F R U R' U' F'",FRU),demoSeq('Linha (line)',9,FRU,FRU)]},
+ {t:'Face amarela',en:'Yellow face (Sune)',m:'oll',f:SUNE,d:'Repeat the Sune, re-gripping between repetitions, until the top is all yellow. Each button shows the exact sequence for that pattern.',
+  demos:[['Sune',1,SUNE],['Anti-sune',2,"y' "+SUNE+" y2 "+SUNE],['H (two pairs)',3,SUNE+' '+SUNE],['Pi',4,SUNE+" y' "+SUNE],
+   ['T',5,SUNE+' y '+SUNE+' y2 '+SUNE],['L (bowtie)',6,'y '+SUNE+' '+SUNE+' '+SUNE],['U (headlights)',7,"y' "+SUNE+' y '+SUNE+" y' "+SUNE]].map(([n,o,s])=>demoSeq(n,o,s,SUNE))},
+ {t:'Finalizar as quinas',en:'Place the corners',f:"R B' R F2 R' B R F2 R2",d:'Find a side with two corners of the same colour and use it as the reference. No such side: do the formula once from anywhere and look again. Finish with U to line the corners up.',
+  demos:[demoInv('Two matching corners on one side',"R B' R F2 R' B R F2 R2")]},
+ {t:'Finalizar os meios',en:'Place the edges',d:'Put a finished side at the back. The two versions differ only in the direction of U. No finished side: do either once and look again.',
+  demos:[demoInv('Horário (clockwise)',"F2 U L R' F2 L' R U F2"),demoInv('Anti-horário',"F2 U' L R' F2 L' R U' F2")]},
+];
+BEG.forEach((s,i)=>s.demos.forEach((d,j)=>{d.id='beg-'+(i+1)+'-'+(j+1);d.step=i}));
+// What a cuber actually sees at each step: pieces not yet in play are greyed (true = grey)
+const absSum=h=>Math.abs(h[0])+Math.abs(h[1])+Math.abs(h[2]);
+const MASKS={
+  cross:cb=>!(absSum(cb.home)===1||(cb.home[1]===-1&&absSum(cb.home)===2)),
+  layer1:cb=>!(absSum(cb.home)===1||cb.home[1]===-1),
+  layer2:cb=>!(absSum(cb.home)===1||cb.home[1]<=0),
+  oll:(cb,t)=>cb.home[1]===1&&absSum(cb.home)>1&&t.f!=='U'};
+
+const NOT=[
+ {h:'Faces',d:'Clockwise as seen when looking straight at that face.',m:['R','L','U','D','F','B']},
+ {h:'Anticlockwise and half turns',d:"An apostrophe reverses the direction; a 2 turns 180°.",m:["R'","U'","F'","R2","U2","F2"]},
+ {h:'Two layers (w)',d:'The face plus the middle layer behind it, same direction as the face. Written Rw, Uw, Fw on cubovelocidade (some sites use lowercase r, u, f).',m:['Rw','Lw','Uw','Dw','Fw',"Rw'"]},
+ {h:'Middle slices',d:'M turns like L, E turns like D, S turns like F.',m:['M',"M'",'E','S','M2']},
+ {h:'Whole-cube rotations',d:'x turns the whole cube like R, y like U, z like F. Nothing is solved or unsolved by a rotation; it just re-grips.',m:['x','y','z',"y'",'y2']},
+];
+
+// =====================================================================
+// 2-look PLL solver
+// =====================================================================
+const SHORT={'a-horario':'A↻','a-anti':'A↺','y':'Y','u-horario':'U↻','u-anti':'U↺','h':'H','z':'Z'};
+const AUF=[[],['U'],["U'"],['U2']];
+function cornersOK(c){for(let m=0;m<4;m++){const d=clone(c);for(let i=0;i<m;i++)simMove(d,'U');if(relOK(d,isCorner))return true}return false}
+function twoLook(cs){
+  if(cs._two)return cs._two;
+  const start=simApply(simNew(),cs.setup);let best=null;
+  for(const a1 of AUF)for(const ci of [null,'a-horario','a-anti','y']){
+    if(!ci&&a1.length)continue;
+    const s1=simApply(clone(start),[...a1,...(ci?pllBy(ci).alg:[])]);if(!cornersOK(s1))continue;
+    for(const a2 of AUF)for(const ei of [null,'u-horario','u-anti','h','z']){
+      if(!ei&&a2.length)continue;
+      const s2=simApply(clone(s1),[...a2,...(ei?pllBy(ei).alg:[])]);
+      for(const a3 of AUF){const s3=simApply(clone(s2),a3);if(!relOK(s3,()=>true))continue;
+        const cost=a1.length+a2.length+a3.length+(ci?pllBy(ci).alg.length:0)+(ei?pllBy(ei).alg.length:0);
+        if(!best||cost<best.cost)best={cost,a1,ci,a2,ei,a3}}}}
+  const segs=[];
+  if(best.a1.length)segs.push({label:'AUF',moves:best.a1});
+  if(best.ci)segs.push({label:'Corners · '+pllBy(best.ci).name,moves:pllBy(best.ci).alg});
+  if(best.a2.length)segs.push({label:'AUF',moves:best.a2});
+  if(best.ei)segs.push({label:'Edges · '+pllBy(best.ei).name,moves:pllBy(best.ei).alg});
+  if(best.a3.length)segs.push({label:'AUF',moves:best.a3});
+  return cs._two={segs,short:`${best.ci?SHORT[best.ci]:'–'} → ${best.ei?SHORT[best.ei]:'–'}`,
+    text:[best.ci?pllBy(best.ci).name:'corners done',best.ei?pllBy(best.ei).name:'edges done'].join('  →  ')};
+}
+
+// =====================================================================
+// 2D diagrams
+// =====================================================================
+const HEX={U:'#ffd500',D:'#ffffff',F:'#c41e1e',B:'#ff7a00',R:'#16a34a',L:'#1e5bd6'};
+const GREY='#565c66';
+function topDiagram(c,{arrows=false,oll=false}={}){
+  const o=13,step=29,sz=26,ctr=i=>o+i*step+sz/2;
+  const col=(p,n)=>{const f=stAt(c,p,n);return oll?(f==='U'?HEX.U:GREY):HEX[f]};
+  let s=`<svg viewBox="0 0 112 112" aria-hidden="true"><rect width="112" height="112" rx="10" style="fill:var(--plate)"/>`;
+  for(let i=0;i<3;i++){const v=i-1;
+    s+=`<rect x="${o+i*step}" y="3" width="${sz}" height="7" rx="2" fill="${col([v,1,-1],[0,0,-1])}"/>`;
+    s+=`<rect x="${o+i*step}" y="102" width="${sz}" height="7" rx="2" fill="${col([v,1,1],[0,0,1])}"/>`;
+    s+=`<rect x="3" y="${o+i*step}" width="7" height="${sz}" rx="2" fill="${col([-1,1,v],[-1,0,0])}"/>`;
+    s+=`<rect x="102" y="${o+i*step}" width="7" height="${sz}" rx="2" fill="${col([1,1,v],[1,0,0])}"/>`;
+    for(let j=0;j<3;j++)s+=`<rect x="${o+j*step}" y="${o+i*step}" width="${sz}" height="${sz}" rx="4" fill="${col([j-1,1,v],[0,1,0])}"/>`;
+  }
+  if(arrows){
+    const fc=c.find(cb=>eq(cb.home,[0,0,1])).pos;let k=0,v=[0,0,1];while(!eq(v,fc)&&k<4){v=R(1,1,v);k++}
+    const tgt=h=>{let p=h;for(let i=0;i<k;i++)p=R(1,1,p);return p};
+    const mv=[];c.forEach(cb=>{if(cb.pos[1]===1&&(cb.pos[0]||cb.pos[2])){const t=tgt(cb.home);if(!eq(t,cb.pos))mv.push([cb.pos,t])}});
+    const drawn=new Set();
+    mv.forEach(([a,b])=>{const key=a+'|'+b;if(drawn.has(key))return;const two=mv.some(([p,q])=>eq(p,b)&&eq(q,a));
+      drawn.add(key);drawn.add(b+'|'+a);
+      let x1=ctr(a[0]+1),y1=ctr(a[2]+1),x2=ctr(b[0]+1),y2=ctr(b[2]+1);const dx=x2-x1,dy=y2-y1,L=Math.hypot(dx,dy),sh=7;
+      x1+=dx/L*sh;y1+=dy/L*sh;x2-=dx/L*sh;y2-=dy/L*sh;
+      s+=`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" style="stroke:var(--arrow)" stroke-width="2.6" stroke-linecap="round" marker-end="url(#ah)"${two?' marker-start="url(#ah)"':''}/>`;});
+  }
+  return s+'</svg>';
+}
+const caseSim=cs=>simApply(simNew(),cs.setup);
+function diagramFor(cs){
+  if(cs.kind==='pll')return topDiagram(caseSim(cs),{arrows:true});
+  if(cs.kind==='oll')return topDiagram(caseSim(cs),{oll:true});
+  if(cs.kind==='f2l')return cs._img?`<img src="${cs._img}" alt="">`:'<div class="ph"></div>';
+  return '';
+}
+
+// =====================================================================
+// 3D
+// =====================================================================
+const COL={U:0xffd500,D:0xffffff,F:0xc41e1e,B:0xff7a00,R:0x16a34a,L:0x1e5bd6};
+const AXN=['x','y','z'];
+const bodyGeo=new THREE.BoxGeometry(0.96,0.96,0.96);
+const bodyMat=new THREE.MeshLambertMaterial({color:0x111111});
+const stGeo=(()=>{const s=0.8,r=0.12,sh=new THREE.Shape();
+  sh.moveTo(-s/2+r,-s/2);sh.lineTo(s/2-r,-s/2);sh.quadraticCurveTo(s/2,-s/2,s/2,-s/2+r);
+  sh.lineTo(s/2,s/2-r);sh.quadraticCurveTo(s/2,s/2,s/2-r,s/2);sh.lineTo(-s/2+r,s/2);
+  sh.quadraticCurveTo(-s/2,s/2,-s/2,s/2-r);sh.lineTo(-s/2,-s/2+r);sh.quadraticCurveTo(-s/2,-s/2,-s/2+r,-s/2);
+  return new THREE.ShapeGeometry(sh)})();
+const stMat={};for(const f in COL)stMat[f]=new THREE.MeshLambertMaterial({color:COL[f],side:THREE.DoubleSide});
+const greyMat=new THREE.MeshLambertMaterial({color:0x7d838c,side:THREE.DoubleSide});
+const ROTN=n=>n[0]===1?[0,Math.PI/2,0]:n[0]===-1?[0,-Math.PI/2,0]:n[1]===1?[-Math.PI/2,0,0]:n[1]===-1?[Math.PI/2,0,0]:n[2]===1?[0,0,0]:[0,Math.PI,0];
+function makeCubies(sim,group,mask){const arr=[];
+  for(const cb of sim){const g=new THREE.Group();g.add(new THREE.Mesh(bodyGeo,bodyMat));
+    for(const t of cb.st){const m=new THREE.Mesh(stGeo,mask&&mask(cb,t)?greyMat:stMat[t.f]);m.rotation.set(...ROTN(t.n));m.position.set(t.n[0]*0.485,t.n[1]*0.485,t.n[2]*0.485);g.add(m)}
+    g.position.set(...cb.pos);group.add(g);arr.push(g)}return arr}
+function lights(scene){scene.add(new THREE.AmbientLight(0xffffff,0.75));const dl=new THREE.DirectionalLight(0xffffff,0.45);dl.position.set(4,8,6);scene.add(dl)}
+function camAt(cam,yaw,pitch,r=10.5){cam.position.set(r*Math.cos(pitch)*Math.sin(-yaw),r*Math.sin(pitch),r*Math.cos(pitch)*Math.cos(yaw));
+  cam.up.set(0,1,0);if(pitch>1.45)cam.up.set(0,0,-1);cam.lookAt(0,0,0)}
+
+// Offscreen thumbnails (F2L cases, beginner situations)
+let thumbR=null;
+function thumb3D(sim,mask){f2lThumb(null);const T=thumbR;while(T.grp.children.length)T.grp.remove(T.grp.children[0]);
+  makeCubies(sim,T.grp,mask);T.r.render(T.scene,T.cam);return T.r.domElement.toDataURL('image/png')}
+function f2lThumb(cs){
+  if(!thumbR){thumbR={r:new THREE.WebGLRenderer({antialias:true,alpha:true,preserveDrawingBuffer:true}),scene:new THREE.Scene(),cam:new THREE.PerspectiveCamera(30,1,0.1,100),grp:new THREE.Group()};
+    thumbR.r.setPixelRatio(1);thumbR.r.setSize(168,168);lights(thumbR.scene);thumbR.scene.add(thumbR.grp);camAt(thumbR.cam,-0.62,0.5,11)}
+  if(!cs)return null;
+  const sim=caseSim(cs);let i=0;while(i<cs.alg.length&&/^(y|Dw)/.test(cs.alg[i]))simMove(sim,cs.alg[i++]); // show it as held after the opening re-grip
+  const T=thumbR;while(T.grp.children.length)T.grp.remove(T.grp.children[0]);
+  makeCubies(sim,T.grp,cb=>cb.home[1]===1);T.r.render(T.scene,T.cam);return T.r.domElement.toDataURL('image/png');
+}
+
+// =====================================================================
+// Shared player
+// =====================================================================
+const $=id=>document.getElementById(id);
+const cv=$('cv');
+const renderer=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+const scene=new THREE.Scene();lights(scene);
+const cam=new THREE.PerspectiveCamera(32,5/4,0.1,100);
+const root=new THREE.Group();scene.add(root);
+let cubies=[];
+const P={item:null,start:null,SEGS:[],ALG:[],idx:0,anim:null,playing:false,speed:1,ctx:null};
+function buildFrom(sim){cubies.forEach(c=>root.remove(c));cubies=makeCubies(sim,root,P.mask)}
+const layerOf=(ax,ls)=>cubies.filter(c=>ls.includes(Math.round(c.position[AXN[ax]])));
+function bake(piv,list){list.forEach(c=>{root.attach(c);c.position.set(...AXN.map(k=>Math.round(c.position[k])));
+  c.rotation.set(...AXN.map(k=>Math.round(c.rotation[k]/(Math.PI/2))*Math.PI/2))});root.remove(piv)}
+function cancelAnim(){if(P.anim){root.remove(P.anim.piv);P.anim=null}}
+function setupAt(n){cancelAnim();buildFrom(simApply(clone(P.start),P.ALG.slice(0,n)));P.idx=n}
+function animate(m,dir){const {ax,ls,s,n}=parse(m);const piv=new THREE.Group();root.add(piv);
+  const l=layerOf(ax,ls);l.forEach(c=>piv.attach(c));
+  P.anim={piv,l,axis:AXN[ax],a:s*n*Math.PI/2,t0:performance.now(),dur:(n===2?520:340)/P.speed,dir}}
+function step(dir){if(P.anim)return;
+  if(dir>0&&P.idx<P.ALG.length)animate(P.ALG[P.idx],1);else if(dir<0&&P.idx>0)animate(inv(P.ALG[P.idx-1]),-1);pui()}
+const ease=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
+
+const HOME={yaw:-0.62,pitch:0.52};
+let yaw=HOME.yaw,pitch=HOME.pitch,topView=false,tYaw=yaw,tPitch=pitch,drag=null;
+cv.addEventListener('pointerdown',e=>{drag={x:e.clientX,y:e.clientY};cv.setPointerCapture(e.pointerId)});
+cv.addEventListener('pointermove',e=>{if(!drag)return;tYaw-=(e.clientX-drag.x)*0.008;tPitch=Math.max(-1.4,Math.min(1.5,tPitch+(e.clientY-drag.y)*0.008));drag={x:e.clientX,y:e.clientY}});
+cv.addEventListener('pointerup',()=>drag=null);
+function resize(){const w=cv.clientWidth,h=cv.clientHeight;if(!w||!h)return;renderer.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix()}
+new ResizeObserver(resize).observe(cv);
+
+function loop(now){
+  if(P.anim){const t=Math.min(1,(now-P.anim.t0)/P.anim.dur);P.anim.piv.rotation[P.anim.axis]=P.anim.a*ease(t);
+    if(t>=1){P.anim.piv.updateMatrixWorld();bake(P.anim.piv,P.anim.l);P.idx+=P.anim.dir;P.anim=null;
+      if(P.playing){if(P.idx>=P.ALG.length)P.playing=false;else setTimeout(()=>{if(P.playing)step(1)},90/P.speed)}pui()}}
+  if(cv.clientWidth){yaw+=(tYaw-yaw)*0.15;pitch+=(tPitch-pitch)*0.15;camAt(cam,yaw,pitch);renderer.render(scene,cam)}
+  requestAnimationFrame(loop);
+}
+
+// item: {id, eyebrow, name, sub, dia, setup, segs, learnable}
+function playerLoad(item,{autoplay=false,nav=true}={}){
+  P.playing=false;P.item=item;P.mask=item.mask||null;P.start=simApply(simNew(),item.setup);
+  document.querySelector('.pnav').hidden=!nav;P.SEGS=item.segs;P.ALG=item.segs.flatMap(s=>s.moves);
+  $('pEye').textContent=item.eyebrow||'';$('pName').textContent=item.name;$('pAlg').textContent=item.sub||'';$('pDia').innerHTML=item.dia||'';
+  $('learn').hidden=!item.learnable;updLearnBtn();
+  renderMoves();setupAt(0);pui();
+  if(autoplay){P.playing=true;step(1)}
+}
+function renderMoves(){const el=$('moves');el.innerHTML='';let i=0;
+  P.SEGS.forEach((seg,li)=>{if(li&&(seg.label||P.SEGS[li-1].label||true))el.appendChild(Object.assign(document.createElement('span'),{className:'brk'}));
+    if(seg.label)el.appendChild(Object.assign(document.createElement('span'),{className:'seglab',textContent:seg.label}));
+    seg.moves.forEach(m=>{const k=i++;const b=document.createElement('button');b.className='mv'+(isRot(m)?' rot':'');b.textContent=m;b.id='mv'+k;
+      b.title=isRot(m)?'Whole-cube rotation':'Jump to this move';b.onclick=()=>{P.playing=false;setupAt(k);step(1)};el.appendChild(b)})})}
+function pui(){
+  const N=P.ALG.length,idx=P.idx,anim=P.anim;
+  P.ALG.forEach((m,i)=>{const b=$('mv'+i);if(!b)return;b.classList.toggle('done',i<idx);b.classList.toggle('cur',anim?(anim.dir>0?i===idx:i===idx-1):false)});
+  $('big').textContent=anim?(anim.dir>0?P.ALG[idx]:inv(P.ALG[idx-1])):(idx?P.ALG[idx-1]:'—');
+  const k=Math.min(idx+(anim&&anim.dir>0?1:0),N);let acc=0,sl='';
+  for(const s of P.SEGS){acc+=s.moves.length;if(k<=acc){sl=s.label;break}}
+  if(P.item&&P.item.id==='pg')pgShowHist();
+  $('hud').textContent=N===0?(P.item&&P.item.id==='pg'?'Type moves or tap the keypad':''):idx===N&&!anim?`Done · ${N} moves`:idx===0&&!anim?'Starting position':`${sl?sl+' · ':''}Move ${k} / ${N}`;
+  $('play').textContent=P.playing?'❚❚ Pause':(idx>=N?'▶ Replay':'▶ Play');
+}
+function togglePlay(){if(P.playing){P.playing=false;pui();return}if(P.idx>=P.ALG.length)setupAt(0);P.playing=true;step(1)}
+$('play').onclick=togglePlay;
+$('fwd').onclick=()=>{P.playing=false;step(1)};
+$('back').onclick=()=>{P.playing=false;step(-1)};
+$('reset').onclick=()=>{P.playing=false;setupAt(0);pui()};
+$('prevc').onclick=()=>P.ctx&&P.ctx(-1);$('nextc').onclick=()=>P.ctx&&P.ctx(1);
+$('spd').oninput=e=>P.speed=+e.target.value;
+$('view').onclick=()=>{topView=!topView;if(topView){tYaw=0;tPitch=1.5}else{tYaw=HOME.yaw;tPitch=HOME.pitch}$('view').textContent=topView?'3D view':'Top view'};
+
+// learned marks (this browser only)
+const store={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+let learned=new Set(store.get('cubo-learned',[]));
+function updLearnBtn(){const on=P.item&&learned.has(P.item.id);$('learn').textContent=on?'✓ Learned':'Mark learned';$('learn').classList.toggle('on',!!on)}
+$('learn').onclick=()=>{const id=P.item.id;learned.has(id)?learned.delete(id):learned.add(id);store.set('cubo-learned',[...learned]);updLearnBtn();refreshGrids()};
+
+// =====================================================================
+// Libraries (F2L / OLL / PLL)
+// =====================================================================
+const LIB={f2l:{cases:F2L,cur:0,filter:'all'},oll:{cases:OLL,cur:0,filter:'all'},pll:{cases:PLL,cur:7,mode:'full'}};
+function itemForCase(cs){
+  const two=cs.kind==='pll'&&LIB.pll.mode==='two';
+  return{id:cs.id,learnable:true,eyebrow:cs.kind.toUpperCase(),name:cs.kind==='pll'?'Caso '+cs.name:cs.name,
+    sub:two?'2-look: '+twoLook(cs).text:cs.text,dia:diagramFor(cs),setup:cs.setup,
+    segs:two?twoLook(cs).segs:cs.lines.map(m=>({label:'',moves:m}))};
+}
+function visibleIdx(kind){const L=LIB[kind];return L.cases.map((c,i)=>i).filter(i=>{const c=L.cases[i];
+  if(L.filter==='cross')return i<7;if(L.filter==='todo')return !learned.has(c.id);return true})}
+function selectCase(kind,i,{push=true}={}){
+  const L=LIB[kind];L.cur=i;const cs=L.cases[i];
+  playerLoad(itemForCase(cs));
+  P.ctx=d=>{const vis=visibleIdx(kind);if(!vis.length)return;let p=vis.indexOf(L.cur);p=p<0?0:(p+d+vis.length)%vis.length;selectCase(kind,vis[p])};
+  document.querySelectorAll(`#g-${kind} .pk`).forEach((p,k)=>p.classList.toggle('on',k===i));
+  if(push)setHash(cs.id);
+}
+function buildGrid(kind){
+  const g=$('g-'+kind);g.innerHTML='';
+  LIB[kind].cases.forEach((cs,i)=>{const b=document.createElement('button');b.className='pk';b.dataset.id=cs.id;
+    b.innerHTML=diagramFor(cs)+`<span>${cs.kind==='pll'?cs.name:cs.name.replace('Caso ','')}</span><small hidden></small>`;
+    b.title=cs.name+' — '+cs.text;b.onclick=()=>selectCase(kind,i);g.appendChild(b)});
+  refreshGrids();
+}
+function refreshGrids(){
+  for(const kind in LIB){const L=LIB[kind];const vis=new Set(visibleIdx(kind));
+    document.querySelectorAll(`#g-${kind} .pk`).forEach((p,i)=>{p.classList.toggle('learned',learned.has(L.cases[i].id));p.hidden=!vis.has(i)});
+    const n=L.cases.filter(c=>learned.has(c.id)).length;$('prog-'+kind).textContent=`${n} / ${L.cases.length} learned`}
+}
+let f2lThumbsDone=false;
+function makeF2LThumbs(){if(f2lThumbsDone)return;f2lThumbsDone=true;let i=0;
+  const tick=()=>{const end=Math.min(i+6,F2L.length);for(;i<end;i++){const cs=F2L[i];cs._img=f2lThumb(cs);
+      const card=document.querySelector(`#g-f2l .pk[data-id="${cs.id}"] .ph`);if(card)card.outerHTML=`<img src="${cs._img}" alt="">`}
+    if(P.item&&P.item.id.startsWith('f2l-')){const cs=F2L.find(c=>c.id===P.item.id);if(cs&&cs._img)$('pDia').innerHTML=`<img src="${cs._img}" alt="">`}
+    if(i<F2L.length)setTimeout(tick,16)};tick()}
+document.querySelectorAll('#v-oll .modes button').forEach(b=>b.onclick=()=>{LIB.oll.filter=b.dataset.f;
+  document.querySelectorAll('#v-oll .modes button').forEach(x=>x.setAttribute('aria-pressed',x===b));refreshGrids()});
+function setPllMode(m){LIB.pll.mode=m;$('mFull').setAttribute('aria-pressed',m==='full');$('mTwo').setAttribute('aria-pressed',m==='two');
+  document.querySelectorAll('#g-pll .pk small').forEach((s,k)=>{s.hidden=m!=='two';if(m==='two')s.textContent=twoLook(PLL[k]).short});
+  if(route.view==='pll')selectCase('pll',LIB.pll.cur,{push:false})}
+$('mFull').onclick=()=>setPllMode('full');$('mTwo').onclick=()=>setPllMode('two');
+
+// =====================================================================
+// Beginner + notation
+// =====================================================================
+let begCur=BEG[0].demos[0];
+function begItem(d){const s=BEG[d.step];return{id:d.id,eyebrow:`Step ${d.step+1} · ${s.t}`,name:d.name,sub:d.alg,dia:begThumb(d),setup:d.setup,segs:d.segs,mask:s.m?MASKS[s.m]:null}}
+function begThumb(d){const s=BEG[d.step],sim=simApply(simNew(),d.setup);
+  if(s.m==='oll')return topDiagram(sim,{oll:true});
+  if(!s.m)return topDiagram(sim,{arrows:true});
+  return d._img?`<img src="${d._img}" alt="">`:'<div class="ph"></div>'}
+let begThumbsDone=false;
+function makeBegThumbs(){if(begThumbsDone)return;begThumbsDone=true;
+  const list=BEGALL.filter(d=>{const m=BEG[d.step].m;return m&&m!=='oll'});let i=0;
+  const tick=()=>{const end=Math.min(i+4,list.length);for(;i<end;i++){const d=list[i];d._img=thumb3D(simApply(simNew(),d.setup),MASKS[BEG[d.step].m]);
+      const el=document.querySelector(`.demo[data-id="${d.id}"] .dth`);if(el)el.innerHTML=`<img src="${d._img}" alt="">`;
+      if(P.item&&P.item.id===d.id)$('pDia').innerHTML=`<img src="${d._img}" alt="">`}
+    if(i<list.length)setTimeout(tick,16)};tick()}
+const BEGALL=BEG.flatMap(s=>s.demos);
+function selectBeg(d,{push=true,autoplay=false}={}){begCur=d;playerLoad(begItem(d),{autoplay});
+  P.ctx=k=>{const i=BEGALL.indexOf(begCur);selectBeg(BEGALL[(i+k+BEGALL.length)%BEGALL.length])};
+  document.querySelectorAll('.demo').forEach(b=>b.classList.toggle('on',b.dataset.id===d.id));if(push)setHash(d.id)}
+(function(){const host=$('begSteps');
+  BEG.forEach((s,i)=>{const c=document.createElement('div');c.className='card step';
+    c.innerHTML=`<div class="num">${i+1}</div><h3>${s.t}<span>${s.en}</span></h3><p>${s.d}</p>${s.f?`<div class="formula">${s.f}</div>`:''}`;
+    const dm=document.createElement('div');dm.className='demos';
+    s.demos.forEach(d=>{const b=document.createElement('button');b.className='demo';b.dataset.id=d.id;
+      const n=d.segs.reduce((a,x)=>a+x.moves.length,0);
+      b.innerHTML=`<span class="dth">${begThumb(d)}</span><span class="dtx"><b>${d.name}</b><span class="dal">${d.alg}</span><span class="dmeta">▶ ${n} move${n>1?'s':''}</span></span>`;
+      b.onclick=()=>selectBeg(d,{autoplay:true});dm.appendChild(b)});
+    c.appendChild(dm);host.appendChild(c)})})();
+
+const NOTALL=NOT.flatMap(g=>g.m.map(m=>({m,g})));
+let notCur=NOTALL[0];
+function selectNot(n,{autoplay=true}={}){notCur=n;
+  playerLoad({id:'not',eyebrow:n.g.h,name:n.m,sub:n.g.d,dia:'',setup:[],segs:[{label:'',moves:[n.m]}]},{autoplay});
+  P.ctx=k=>{const i=NOTALL.indexOf(notCur);selectNot(NOTALL[(i+k+NOTALL.length)%NOTALL.length])};
+  document.querySelectorAll('.nchip').forEach(b=>b.classList.toggle('on',b.textContent===n.m&&b.dataset.g===n.g.h))}
+(function(){const host=$('notGroups');
+  NOT.forEach(g=>{const c=document.createElement('div');c.className='card ngroup';c.innerHTML=`<h3>${g.h}</h3><p>${g.d}</p>`;
+    const ch=document.createElement('div');ch.className='nchips';
+    g.m.forEach(m=>{const b=document.createElement('button');b.className='nchip';b.textContent=m;b.dataset.g=g.h;b.onclick=()=>selectNot(NOTALL.find(n=>n.m===m&&n.g===g));ch.appendChild(b)});
+    c.appendChild(ch);host.appendChild(c)})})();
+
+// =====================================================================
+// Sandbox: type moves, the cube performs them
+// =====================================================================
+const MV_RE=/([RLUDFB]w|[RLUDFBMES]|[xyzXYZ]|[rludfb])(2'|'2|2|'|3)?/g;
+function parseMoves(str){
+  const s=str.replace(/[’‘`´]/g,"'").replace(/[()\[\]{},;·.]/g,' ');const out=[];let last=0,m;MV_RE.lastIndex=0;
+  while((m=MV_RE.exec(s))){const gap=s.slice(last,m.index).trim();if(gap)return{err:gap};
+    let b=m[1];if(/^[rludfb]$/.test(b))b=b.toUpperCase()+'w';else if(/^[XYZ]$/.test(b))b=b.toLowerCase();
+    const suf=m[2]==="'2"?'2':m[2]==='3'?"'":(m[2]||'');out.push(b+suf);last=MV_RE.lastIndex}
+  const tail=s.slice(last).trim();if(tail)return{err:tail};return{moves:out}}
+let pgBase=[];
+const pgApplied=()=>P.item&&P.item.id==='pg'?[...P.item.setup,...P.ALG.slice(0,P.idx+(P.anim&&P.anim.dir>0?1:0))]:pgBase;
+function pgShowHist(){const h=pgApplied();$('pgHist').textContent=h.length?h.join(' '):'Solved cube (no moves yet)'}
+function pgLoad(setup,moves,{autoplay=false,toEnd=false,label=''}={}){
+  pgBase=setup;playerLoad({id:'pg',eyebrow:'Sandbox',name:label||'Your moves',sub:moves.length?moves.join(' '):'',dia:'',setup,segs:[{label:'',moves}]},{autoplay,nav:false});
+  if(toEnd){setupAt(moves.length);pui()}}
+function pgRead(){const r=parseMoves($('mvIn').value);const box=$('mvIn');
+  if(r.err){box.classList.add('bad');$('mvErr').textContent=`“${r.err.slice(0,12)}” isn't a move. Use R L U D F B, M E S, x y z, with ' or 2 (wide: Rw or r).`;return null}
+  box.classList.remove('bad');$('mvErr').textContent='';if(!r.moves.length){$('mvErr').textContent='Type at least one move.';return null}return r.moves}
+$('pgRun').onclick=()=>{const m=pgRead();if(m)pgLoad(pgApplied(),m,{autoplay:true})};
+$('pgNow').onclick=()=>{const m=pgRead();if(m)pgLoad(pgApplied(),m,{toEnd:true})};
+$('pgCase').onclick=()=>{const m=pgRead();if(m)pgLoad(invSeq(m),m,{label:'Your algorithm as a case'})};
+$('mvIn').addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.metaKey||e.ctrlKey)){e.preventDefault();$('pgRun').click()}});
+$('mvIn').addEventListener('input',()=>{$('mvIn').classList.remove('bad');$('mvErr').textContent=''});
+$('pgUndo').onclick=()=>{const h=pgApplied();if(!h.length)return;pgLoad(h.slice(0,-1),[],{label:'Undid '+h[h.length-1]})};
+$('pgReset').onclick=()=>pgLoad([],[]);
+$('pgScr').onclick=()=>pgLoad(genScramble(),[],{label:'Scrambled'});
+$('pgCopy').onclick=async e=>{const b=e.currentTarget,t=pgApplied().join(' ');try{await navigator.clipboard.writeText(t);b.textContent='Copied'}catch(err){
+  const r=document.createRange();r.selectNodeContents($('pgHist'));const sel=getSelection();sel.removeAllRanges();sel.addRange(r);b.textContent='Selected'}setTimeout(()=>b.textContent='Copy',1400)};
+(function(){const kp=$('keypad');
+  [['Faces',['R','L','U','D','F','B']],['Prime',["R'","L'","U'","D'","F'","B'"]],['Double',['R2','L2','U2','D2','F2','B2']],
+   ['Slices & wide',['M',"M'",'E','S','Rw',"Rw'"]],['Rotations',['x',"x'",'y',"y'",'z',"z'"]]].forEach(([h,ms])=>{
+    kp.appendChild(Object.assign(document.createElement('div'),{className:'kh',textContent:h}));
+    ms.forEach(m=>{const b=document.createElement('button');b.textContent=m;b.onclick=()=>pgLoad(pgApplied(),[m],{autoplay:true});kp.appendChild(b)})})})();
+
+// =====================================================================
+// Timer
+// =====================================================================
+const FACES=['U','D','R','L','F','B'],AXIS={U:0,D:0,R:1,L:1,F:2,B:2},SUF=['',"'",'2'];
+function genScramble(n=20){const out=[];let a=null,b=null;
+  while(out.length<n){const f=FACES[Math.floor(Math.random()*6)];
+    if(f===a)continue; if(a&&b&&AXIS[f]===AXIS[a]&&AXIS[a]===AXIS[b])continue; if(a&&AXIS[f]===AXIS[a]&&f===b)continue;
+    out.push(f+SUF[Math.floor(Math.random()*3)]);b=a;a=f}return out}
+const WCA={U:'#ffffff',D:'#ffd500',F:'#16a34a',B:'#1e5bd6',R:'#c41e1e',L:'#ff7a00'}; // white top, green front
+function drawNet(scr){
+  const c=simApply(simNew(),scr),cs=19,g=2,fs=3*cs+2*g+6;
+  const faces={U:[1,0,(r,k)=>[[k-1,1,r-1],[0,1,0]]],L:[0,1,(r,k)=>[[-1,1-r,k-1],[-1,0,0]]],F:[1,1,(r,k)=>[[k-1,1-r,1],[0,0,1]]],
+    R:[2,1,(r,k)=>[[1,1-r,1-k],[1,0,0]]],B:[3,1,(r,k)=>[[1-k,1-r,-1],[0,0,-1]]],D:[1,2,(r,k)=>[[k-1,-1,1-r],[0,-1,0]]]};
+  let s='';for(const f in faces){const [cx,cy,fn]=faces[f];for(let r=0;r<3;r++)for(let k=0;k<3;k++){const [p,n]=fn(r,k);
+    s+=`<rect x="${cx*fs+k*(cs+g)+1}" y="${cy*fs+r*(cs+g)+1}" width="${cs}" height="${cs}" rx="3" fill="${WCA[stAt(c,p,n)]}" style="stroke:var(--line)" stroke-width="1"/>`}}
+  $('net').innerHTML=s;
+}
+let solves=store.get('cubo-solves',[]);
+const T={state:'idle',scr:[],hist:[],t0:0,inspT0:0,inspOn:store.get('cubo-insp',false),hide:store.get('cubo-hide',false),holdTimer:null,inInsp:false,pen:0};
+$('optInsp').checked=T.inspOn;$('optHide').checked=T.hide;
+$('optInsp').onchange=e=>{T.inspOn=e.target.checked;store.set('cubo-insp',T.inspOn)};
+$('optHide').onchange=e=>{T.hide=e.target.checked;store.set('cubo-hide',T.hide)};
+function newScramble(){if(T.scr.length)T.hist.push(T.scr);T.scr=genScramble();showScramble()}
+function showScramble(){$('scrTxt').textContent=T.scr.join(' ');drawNet(T.scr)}
+$('scrNew').onclick=e=>{newScramble();e.currentTarget.blur()};
+$('scrPrev').onclick=e=>{if(T.hist.length){T.scr=T.hist.pop();showScramble()}e.currentTarget.blur()};
+$('scrCopy').onclick=async e=>{const b=e.currentTarget;b.blur();try{await navigator.clipboard.writeText(T.scr.join(' '));b.textContent='Copied'}catch(err){
+  const r=document.createRange();r.selectNodeContents($('scrTxt'));const sel=getSelection();sel.removeAllRanges();sel.addRange(r);b.textContent='Selected'}setTimeout(()=>b.textContent='Copy',1400)};
+
+const val=s=>s.pen==='DNF'?Infinity:s.t+(s.pen||0);
+function fmt(ms){if(ms===Infinity)return 'DNF';if(ms==null||isNaN(ms))return '—';const cs=Math.floor(ms/10),s=Math.floor(cs/100),m=Math.floor(s/60);
+  const c=String(cs%100).padStart(2,'0');return m?`${m}:${String(s%60).padStart(2,'0')}.${c}`:`${s}.${c}`}
+function avgOf(arr){const n=arr.length,trim=n<=12?1:Math.ceil(n*0.05);const v=arr.map(val).sort((a,b)=>a-b);const mid=v.slice(trim,n-trim);
+  if(mid.some(x=>x===Infinity))return Infinity;return mid.reduce((a,b)=>a+b,0)/mid.length}
+const aoAt=(i,n)=>i+1>=n?avgOf(solves.slice(i+1-n,i+1)):null;
+function bestAo(n){let b=null;for(let i=n-1;i<solves.length;i++){const a=aoAt(i,n);if(a!=null&&(b==null||a<b))b=a}return b}
+function renderStats(){
+  const L=solves.length-1,ok=solves.filter(s=>val(s)!==Infinity),single=L>=0?val(solves[L]):null;
+  const best=ok.length?Math.min(...ok.map(val)):null,mean=ok.length?ok.reduce((a,s)=>a+val(s),0)/ok.length:null;
+  const cells=[['Single',single],['Best',best],['ao5',aoAt(L,5)],['ao12',aoAt(L,12)],['ao50',aoAt(L,50)],['ao100',aoAt(L,100)],['Best ao5',bestAo(5)],['Mean',mean]];
+  $('stats').innerHTML=cells.map(([k,v])=>`<div class="stat"><div class="k">${k}</div><div class="v">${fmt(v)}</div></div>`).join('')+
+    `<div class="stat"><div class="k">Solves</div><div class="v">${ok.length}/${solves.length}</div></div>`;
+  const list=$('solves');
+  if(!solves.length){list.innerHTML='<div class="empty">No solves yet. Scramble with the moves above (white top, green front), then start the timer.</div>'}
+  else{list.innerHTML='';for(let i=solves.length-1;i>=Math.max(0,solves.length-300);i--){const s=solves[i];const r=document.createElement('div');r.className='srow';
+    const a5=aoAt(i,5);
+    r.innerHTML=`<span class="i">${i+1}</span><span class="tm">${s.pen==='DNF'?'DNF':fmt(val(s))+(s.pen?'+':'')}<small title="${s.scr}">${s.scr}</small></span><span class="a5">${a5==null?'':'ao5 '+fmt(a5)}</span>
+      <span class="ops"><button data-op="2" class="${s.pen===2000?'on':''}" title="+2 penalty">+2</button><button data-op="d" class="${s.pen==='DNF'?'on':''}" title="Did not finish">DNF</button><button data-op="x" title="Delete">✕</button></span>`;
+    r.querySelectorAll('button').forEach(b=>b.onclick=()=>{const op=b.dataset.op;
+      if(op==='2')s.pen=s.pen===2000?0:2000;else if(op==='d')s.pen=s.pen==='DNF'?0:'DNF';else solves.splice(i,1);saveSolves()});
+    list.appendChild(r)}}
+  renderTrend();
+}
+function renderTrend(){
+  const el=$('trend'),W=320,H=120,pl=40,pr=8,pt=10,pb=18;
+  const last=solves.slice(-50),pts=last.map((s,i)=>({i,v:val(s)})).filter(p=>p.v!==Infinity);
+  if(pts.length<2){el.innerHTML=`<text x="${W/2}" y="${H/2}" text-anchor="middle" style="fill:var(--muted);font:12px var(--display)">Two or more solves draw the trend</text>`;return}
+  const off=solves.length-last.length,ao=last.map((s,i)=>aoAt(off+i,5));
+  const vals=pts.map(p=>p.v).concat(ao.filter(v=>v!=null&&v!==Infinity));
+  let lo=Math.min(...vals),hi=Math.max(...vals);if(hi-lo<500){const m=(hi+lo)/2;lo=m-250;hi=m+250}
+  const X=i=>pl+(last.length<=1?0:i/(last.length-1))*(W-pl-pr),Y=v=>pt+(1-(v-lo)/(hi-lo))*(H-pt-pb);
+  let s='';[lo,(lo+hi)/2,hi].forEach(v=>{s+=`<line x1="${pl}" x2="${W-pr}" y1="${Y(v)}" y2="${Y(v)}" style="stroke:var(--line)" stroke-width="1"/><text x="${pl-6}" y="${Y(v)+4}" text-anchor="end" style="fill:var(--muted);font:10px var(--mono)">${fmt(v)}</text>`});
+  s+=`<polyline fill="none" style="stroke:var(--muted)" stroke-width="1.5" points="${pts.map(p=>X(p.i)+','+Y(p.v)).join(' ')}"/>`;
+  pts.forEach(p=>s+=`<circle cx="${X(p.i)}" cy="${Y(p.v)}" r="2" style="fill:var(--muted)"/>`);
+  const ap=ao.map((v,i)=>v!=null&&v!==Infinity?X(i)+','+Y(v):null).filter(Boolean);
+  if(ap.length>1)s+=`<polyline fill="none" style="stroke:var(--accent)" stroke-width="2.2" stroke-linejoin="round" points="${ap.join(' ')}"/>`;
+  s+=`<text x="${pl}" y="${H-4}" style="fill:var(--muted);font:10px var(--mono)">last ${last.length}</text>`;
+  el.innerHTML=s;
+}
+function saveSolves(){store.set('cubo-solves',solves);renderStats()}
+let clearArm=null;
+$('clearBtn').onclick=e=>{const b=e.currentTarget;b.blur();if(!solves.length)return;
+  if(clearArm){clearTimeout(clearArm);clearArm=null;solves=[];saveSolves();b.textContent='Clear session';return}
+  b.textContent='Tap again to clear';clearArm=setTimeout(()=>{clearArm=null;b.textContent='Clear session'},2500)};
+
+const clock=$('clock');
+function setClock(txt,cls){clock.textContent=txt;clock.className='clock'+(cls?' '+cls:'')}
+function tDown(){
+  if(T.state==='running'){stopSolve();T.state='stopped';return}
+  if(T.state==='idle'&&T.inspOn){T.state='insp-press';return}
+  if(T.state==='idle'||T.state==='inspecting'){T.inInsp=T.state==='inspecting';T.state='holding';setClock(T.inInsp?clock.textContent:fmt(0),'hold');
+    T.holdTimer=setTimeout(()=>{if(T.state==='holding'){T.state='ready';setClock(T.inInsp?clock.textContent:fmt(0),'ready')}},300)}
+}
+function tUp(){
+  if(T.state==='stopped'){T.state='idle';return}
+  if(T.state==='insp-press'){T.state='inspecting';T.inspT0=performance.now();document.body.classList.add('running');tick();return}
+  if(T.state==='holding'){clearTimeout(T.holdTimer);if(T.inInsp){T.state='inspecting';clock.className='clock insp'}else{T.state='idle';setClock(solves.length?fmt(val(solves[solves.length-1])):'0.00')}return}
+  if(T.state==='ready'){
+    T.pen=0;if(T.inInsp){const e=(performance.now()-T.inspT0)/1000;T.pen=e>17?'DNF':e>15?2000:0}
+    T.state='running';T.t0=performance.now();document.body.classList.add('running');clock.className='clock';tick()}
+}
+function tick(){
+  if(T.state==='running'){setClock(T.hide?'solve':fmt(performance.now()-T.t0));requestAnimationFrame(tick)}
+  else if(T.state==='inspecting'||((T.state==='holding'||T.state==='ready')&&T.inInsp)){
+    const e=(performance.now()-T.inspT0)/1000,left=Math.ceil(15-e);
+    const txt=e>17?'DNF':e>15?'+2':String(left);
+    if(T.state==='inspecting')setClock(txt,'insp');else clock.textContent=txt;
+    requestAnimationFrame(tick)}
+}
+function stopSolve(){const t=Math.round(performance.now()-T.t0);document.body.classList.remove('running');
+  solves.push({t,pen:T.pen,scr:T.scr.join(' '),d:Date.now()});
+  setClock(T.pen==='DNF'?'DNF':fmt(t+(T.pen||0))+(T.pen?'+':''));saveSolves();newScramble()}
+function tCancel(){clearTimeout(T.holdTimer);T.state='idle';document.body.classList.remove('running');setClock(solves.length?fmt(val(solves[solves.length-1])):'0.00')}
+const pad=$('pad');
+pad.addEventListener('pointerdown',e=>{if(e.button)return;e.preventDefault();pad.setPointerCapture(e.pointerId);tDown()});
+pad.addEventListener('pointerup',e=>{e.preventDefault();tUp()});
+pad.addEventListener('pointercancel',()=>{if(T.state!=='running')tCancel()});
+// while running, a tap anywhere stops
+document.addEventListener('pointerdown',e=>{if(route.view==='timer'&&T.state==='running'&&!pad.contains(e.target)){stopSolve();T.state='stopped'}},true);
+document.addEventListener('pointerup',()=>{if(route.view==='timer'&&T.state==='stopped')T.state='idle'},true);
+
+// =====================================================================
+// Keyboard + routing
+// =====================================================================
+addEventListener('keydown',e=>{
+  if(e.target.tagName==='TEXTAREA'||(e.target.tagName==='INPUT'&&e.target.type!=='checkbox'))return;
+  if(route.view==='timer'){
+    if(e.key==='Escape'){tCancel();return}
+    if(T.state==='running'&&!['Shift','Control','Alt','Meta'].includes(e.key)){e.preventDefault();tDown();return}
+    if(e.code==='Space'){e.preventDefault();if(!e.repeat)tDown()}
+    return}
+  if(e.metaKey||e.ctrlKey||e.altKey)return;
+  if(e.code==='Space'&&!/^(BUTTON|A)$/.test(e.target.tagName)){e.preventDefault();togglePlay()}
+  else if(e.key==='ArrowRight'){P.playing=false;step(1)}else if(e.key==='ArrowLeft'){P.playing=false;step(-1)}
+  else if(e.key==='r'||e.key==='R'){P.playing=false;setupAt(0);pui()}
+  else if(e.key==='['){P.ctx&&P.ctx(-1)}else if(e.key===']'){P.ctx&&P.ctx(1)}
+});
+addEventListener('keyup',e=>{if(route.view==='timer'&&(e.code==='Space'||T.state==='stopped')){e.preventDefault();tUp()}});
+
+const route={view:null};
+const VIEWS=['timer','beginner','cfop','f2l','oll','pll','notation','moves'];
+let lastHash='';
+function setHash(h){lastHash='#'+h;try{history.replaceState(null,'','#'+h)}catch(e){}}
+function go(hash,{fromHash=false}={}){
+  const h=(hash||'').replace(/^#/,'');const view=VIEWS.find(v=>h===v||h.startsWith(v+'-'))||(h.startsWith('beg-')?'beginner':'timer');
+  if(route.view==='timer'&&view!=='timer')tCancel();
+  if(P.item&&P.item.id==='pg')pgBase=pgApplied();
+  route.view=view;
+  VIEWS.forEach(v=>$('v-'+v).hidden=v!==view);
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.dataset.v===view));
+  const slot=document.querySelector(`#v-${view} .slot`);
+  if(slot&&$('player').parentNode!==slot)slot.appendChild($('player'));
+  if(view==='f2l'||view==='oll'||view==='pll'){
+    if(view==='f2l')makeF2LThumbs();
+    const L=LIB[view];const k=L.cases.findIndex(c=>c.id===h);selectCase(view,k>=0?k:L.cur,{push:false});
+  }else if(view==='beginner'){makeBegThumbs();const d=BEGALL.find(x=>x.id===h);selectBeg(d||begCur,{push:false})}
+  else if(view==='moves'){pgLoad(pgBase,[])}
+  else if(view==='notation'){selectNot(notCur,{autoplay:false})}
+  else if(view==='timer'){setClock(solves.length?fmt(val(solves[solves.length-1])):'0.00')}
+  if(!fromHash)setHash(h&&h!==view&&!VIEWS.includes(h)?h:view);
+  requestAnimationFrame(resize);
+}
+document.querySelectorAll('.tab').forEach(t=>t.onclick=e=>{e.preventDefault();go(t.dataset.v);scrollTo(0,0)});
+addEventListener('hashchange',()=>{if(location.hash!==lastHash){lastHash=location.hash;go(location.hash,{fromHash:true})}});
+
+// boot
+buildGrid('f2l');buildGrid('oll');buildGrid('pll');
+T.scr=genScramble();showScramble();renderStats();
+go(location.hash||'#timer');
+requestAnimationFrame(loop);
+</script>
+
+</body>
+</html>
