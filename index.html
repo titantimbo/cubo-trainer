@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="Speedcubing trainer: timer with scrambles, beginner method, CFOP F2L/OLL/PLL with a 3D player, and a move sandbox.">
+<meta name="description" content="Speedcubing trainer: timer with scrambles, algorithm drills, cross trainer, beginner method, CFOP F2L/OLL/PLL with a 3D player, and a move sandbox.">
 <title>Cubo Trainer</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=JetBrains+Mono:wght@400;600&display=swap">
@@ -80,6 +80,7 @@ h1.vt{margin:0;font-size:34px;font-weight:800;letter-spacing:-.02em;line-height:
 .bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .t{font:700 13.5px var(--display);background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:9px;padding:9px 12px;cursor:pointer}
 .t:hover{border-color:var(--muted)}
+.t:disabled{opacity:.4;cursor:default;border-color:var(--line)}
 .t.primary{background:var(--fg);color:var(--bg);border-color:var(--fg);min-width:92px}
 .t.sq{padding:7px 11px}
 .t.on{border-color:var(--go);color:var(--go)}
@@ -152,6 +153,47 @@ code,.code{font-family:var(--mono);font-size:12.5px;color:var(--fg);background:v
 .keypad .kh{grid-column:1/-1;font:600 10.5px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:4px}
 .hist{font:600 14px/1.6 var(--mono);overflow-wrap:anywhere;color:var(--fg);max-height:160px;overflow:auto}
 
+/* drill + cross */
+.sel{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);flex-wrap:wrap}
+.sel select{font:600 13.5px var(--display);color:var(--fg);background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:8px 10px;max-width:100%}
+.chk{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);cursor:pointer}
+.chk input{accent-color:var(--accent)}
+.dscr{font:600 clamp(15px,2vw,18px)/1.6 var(--mono);word-spacing:.2em;overflow-wrap:anywhere;color:var(--fg)}
+.dpad{padding-block:18px 14px;margin-top:12px;background:var(--soft);border:1px solid var(--line)}
+.clock.dclock{font-size:clamp(56px,9vw,92px)}
+.dres:empty{display:none}
+.dres{margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+.dlast{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 12px}
+.dlast b{font-size:18px}
+.dtime{font:800 22px var(--display);font-variant-numeric:tabular-nums;color:var(--accent)}
+.dalg{font:500 12.5px/1.5 var(--mono);color:var(--muted);margin-top:4px;overflow-wrap:anywhere}
+.dans .pk.ok{border-color:var(--go);box-shadow:0 0 0 2px var(--go)}
+.dans .pk.bad{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+.rmsg{font:700 14px var(--display);min-height:34px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;color:var(--muted)}
+.rmsg.ok{color:var(--go)} .rmsg.bad{color:var(--accent)}
+.drow{display:grid;grid-template-columns:minmax(0,1.1fr) 34px 64px 64px minmax(30px,1fr);gap:10px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums;font-size:13px}
+.drow:last-child{border-bottom:0}
+.drow.h{font:600 10.5px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.drow .nm{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.drow .mu{color:var(--muted);font-family:var(--mono);font-size:12px}
+.dbar{height:6px;border-radius:3px;background:var(--chip);overflow:hidden}
+.dbar i{display:block;height:100%;background:var(--accent);border-radius:3px}
+.dsum{font-size:13px;color:var(--muted);margin-bottom:6px}
+.dstats{max-height:420px;overflow:auto}
+@media (max-width:520px){.drow{grid-template-columns:minmax(0,1fr) 30px 58px 58px}.drow .dbar,.drow .bh{display:none}}
+.xin{display:flex;gap:8px;margin-top:8px}
+.xin input{flex:1;min-width:0;font:600 16px var(--mono);color:var(--fg);background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:9px 12px}
+.xin input:focus{outline:2px solid var(--accent);outline-offset:1px}
+.ferr.good{color:var(--go)}
+.xsols{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.xsols:empty{display:none}
+.xsol{display:flex;justify-content:space-between;gap:10px;align-items:center;text-align:left;font:600 15px var(--mono);background:var(--soft);border:1px solid var(--line);color:var(--fg);border-radius:9px;padding:9px 12px;cursor:pointer}
+.xsol:hover{border-color:var(--muted)}
+.xsol.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.xsol span{font:600 11px var(--mono);color:var(--muted);white-space:nowrap}
+.xinfo{font-size:13px;color:var(--muted);margin-top:10px;min-height:18px}
+.xinfo b{color:var(--fg)}
+
 /* timer */
 .tw{max-width:1000px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
 .scr{display:flex;gap:12px;align-items:center;flex-wrap:wrap;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
@@ -202,6 +244,9 @@ body.running .nav, body.running .hide-run{opacity:0;pointer-events:none;transiti
     <div class="brand"><i><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b></i>Cubo Trainer</div>
     <nav class="tabs" aria-label="Sections">
       <a class="tab" href="#timer" data-v="timer">Timer</a>
+      <a class="tab" href="#drill" data-v="drill">Drill</a>
+      <a class="tab" href="#cross" data-v="cross">Cross</a>
+      <span class="tabsep">Learn</span>
       <a class="tab" href="#beginner" data-v="beginner">Beginner</a>
       <span class="tabsep">CFOP</span>
       <a class="tab" href="#cfop" data-v="cfop">Overview</a>
@@ -255,6 +300,75 @@ body.running .nav, body.running .hide-run{opacity:0;pointer-events:none;transiti
           <svg class="trend" id="trend" viewBox="0 0 320 120" role="img" aria-label="Recent solve times"></svg>
         </div>
       </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ DRILL ============ -->
+<section class="view lib" id="v-drill" hidden>
+  <div class="slot"></div>
+  <div class="side">
+    <div>
+      <div class="eyebrow">Algorithm drill</div>
+      <h1 class="vt">Drill cases</h1>
+      <p class="lede"><b>Execute:</b> apply the scramble to a solved cube, then time yourself solving the case. <b>Recognise:</b> name the case on the 3D cube, no physical cube needed. In both modes your slowest and most-missed cases come up more often.</p>
+    </div>
+    <div class="toolbar">
+      <label class="sel" for="dSet">Set <select id="dSet"></select></label>
+      <div class="modes" role="group" aria-label="Drill mode">
+        <button id="dmExec" aria-pressed="true">Execute (timed)</button>
+        <button id="dmRec" aria-pressed="false">Recognise</button>
+      </div>
+    </div>
+    <div class="card" id="dExec">
+      <div class="chead"><h3 id="dScrH">Scramble for this case</h3><button class="t sq" id="dCopy">Copy</button></div>
+      <div class="dscr" id="dScr"></div>
+      <p class="fnote">Yellow on top, red in front, starting from a solved cube. The case stays hidden on screen until you stop the timer.</p>
+      <div class="pad dpad" id="dPad" role="button" tabindex="0" aria-label="Drill timer: hold space or press and hold, release to start">
+        <div class="clock dclock" id="dClock">0.00</div>
+        <div class="hint">Hold <b>space</b> (or press here) until green, release to start. Any key stops.</div>
+      </div>
+      <div class="dres" id="dRes"></div>
+    </div>
+    <div class="card" id="dRec" hidden>
+      <div class="chead"><h3>Which case is on the cube?</h3></div>
+      <div class="rmsg" id="dMsg" role="status"></div>
+      <div class="grid dans" id="dAns" style="margin-top:10px"></div>
+    </div>
+    <div class="card">
+      <div class="chead"><h3>Your cases</h3><button class="t sq" id="dReset">Reset stats</button></div>
+      <div id="dStats"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CROSS ============ -->
+<section class="view lib" id="v-cross" hidden>
+  <div class="slot"></div>
+  <div class="side">
+    <div>
+      <div class="eyebrow">Cross trainer</div>
+      <h1 class="vt">Plan the cross</h1>
+      <p class="lede">Apply the scramble to a solved cube (yellow on top, red in front), then plan the white cross on the bottom. No cross ever needs more than 8 moves. Type what you did to check it, then compare with the shortest answers.</p>
+    </div>
+    <div class="card">
+      <div class="chead"><h3>Scramble</h3><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="t sq" id="xCopy">Copy</button><button class="t sq" id="xNew">New scramble</button></div></div>
+      <div class="dscr" id="xScr"></div>
+      <div class="bar" style="margin-top:12px">
+        <label class="sel" for="xDiff">Shortest cross <select id="xDiff"><option value="any">Any length</option><option value="4">4 moves</option><option value="5">5 moves</option><option value="6">6 moves</option><option value="7">7 moves</option><option value="8">8 moves (rare)</option></select></label>
+        <label class="chk"><input type="checkbox" id="xShowLen"> Show the length up front</label>
+        <button class="t sq" id="xPlan">Plan · 15 s</button>
+      </div>
+      <div class="xinfo" id="xInfo"></div>
+    </div>
+    <div class="card">
+      <h3>Your solution</h3>
+      <div class="xin"><input id="xIn" type="text" spellcheck="false" autocomplete="off" autocapitalize="off" aria-label="Your cross solution" placeholder="e.g. D R' F2 L' D'"><button class="t" id="xCheck">Check</button></div>
+      <div class="ferr" id="xMsg" role="status"></div>
+    </div>
+    <div class="card">
+      <div class="chead"><h3>Shortest solutions</h3><button class="t primary" id="xShow">Show answer</button></div>
+      <div class="xsols" id="xSols"></div>
     </div>
   </div>
 </section>
@@ -752,8 +866,9 @@ function pui(){
   const k=Math.min(idx+(anim&&anim.dir>0?1:0),N);let acc=0,sl='';
   for(const s of P.SEGS){acc+=s.moves.length;if(k<=acc){sl=s.label;break}}
   if(P.item&&P.item.id==='pg')pgShowHist();
-  $('hud').textContent=N===0?(P.item&&P.item.id==='pg'?'Type moves or tap the keypad':''):idx===N&&!anim?`Done · ${N} moves`:idx===0&&!anim?'Starting position':`${sl?sl+' · ':''}Move ${k} / ${N}`;
-  $('play').textContent=P.playing?'❚❚ Pause':(idx>=N?'▶ Replay':'▶ Play');
+  $('hud').textContent=N===0?(P.item&&P.item.hud!=null?P.item.hud:(P.item&&P.item.id==='pg'?'Type moves or tap the keypad':'')):idx===N&&!anim?`Done · ${N} moves`:idx===0&&!anim?'Starting position':`${sl?sl+' · ':''}Move ${k} / ${N}`;
+  $('play').textContent=P.playing?'❚❚ Pause':(N&&idx>=N?'▶ Replay':'▶ Play');
+  ['play','fwd','back','reset'].forEach(k=>$(k).disabled=N===0);
 }
 function togglePlay(){if(P.playing){P.playing=false;pui();return}if(P.idx>=P.ALG.length)setupAt(0);P.playing=true;step(1)}
 $('play').onclick=togglePlay;
@@ -804,7 +919,7 @@ function refreshGrids(){
 let f2lThumbsDone=false;
 function makeF2LThumbs(){if(f2lThumbsDone)return;f2lThumbsDone=true;let i=0;
   const tick=()=>{const end=Math.min(i+6,F2L.length);for(;i<end;i++){const cs=F2L[i];cs._img=f2lThumb(cs);
-      const card=document.querySelector(`#g-f2l .pk[data-id="${cs.id}"] .ph`);if(card)card.outerHTML=`<img src="${cs._img}" alt="">`}
+      document.querySelectorAll(`.pk[data-id="${cs.id}"] .ph`).forEach(el=>el.outerHTML=`<img src="${cs._img}" alt="">`)}
     if(P.item&&P.item.id.startsWith('f2l-')){const cs=F2L.find(c=>c.id===P.item.id);if(cs&&cs._img)$('pDia').innerHTML=`<img src="${cs._img}" alt="">`}
     if(i<F2L.length)setTimeout(tick,16)};tick()}
 document.querySelectorAll('#v-oll .modes button').forEach(b=>b.onclick=()=>{LIB.oll.filter=b.dataset.f;
@@ -1003,10 +1118,213 @@ document.addEventListener('pointerdown',e=>{if(route.view==='timer'&&T.state==='
 document.addEventListener('pointerup',()=>{if(route.view==='timer'&&T.state==='stopped')T.state='idle'},true);
 
 // =====================================================================
+// Face-turn-only rewriting (so drill scrambles never need wide moves or rotations)
+// =====================================================================
+const FEXP={Rw:['L','x'],Lw:['R',"x'"],Uw:['D','y'],Dw:['U',"y'"],Fw:['B','z'],Bw:['F',"z'"],M:['R',"L'","x'"],E:['U',"D'","y'"],S:["F'",'B','z']};
+function expandMove(m){const base=m.replace(/['2]+$/,''),suf=m.slice(base.length);const two=suf.includes('2'),pr=!two&&suf.includes("'");
+  return (FEXP[base]||[base]).map(p=>two?p.replace(/'$/,'')+'2':pr?(p.endsWith("'")?p.slice(0,-1):p+"'"):p)}
+const AMT={'':1,'2':2,"'":3},SUFA=[null,'','2',"'"];
+function simplifySeq(seq){const st=[];for(const t of seq){const f=t[0],a=AMT[t.slice(1)];const top=st[st.length-1];
+  if(top&&top[0]===f){const s=(AMT[top.slice(1)]+a)%4;st.pop();if(s)st.push(f+SUFA[s])}else st.push(t)}return st}
+function faceOnly(seq){const rots=[],out=[];
+  const place=v=>{for(const r of rots){const {ax,s,n}=parse(r);for(let k=0;k<n;k++)v=R(ax,s,v)}return v};
+  for(const m of seq)for(const t of expandMove(m)){if(isRot(t)){rots.push(t);continue}
+    const n=NORM[t[0]],f=Object.keys(NORM).find(k=>eq(place([...NORM[k]]),n));out.push(f+t.slice(1))}
+  return simplifySeq(out)}
+const ORIENTS=(()=>{const out=[],seen=new Set();
+  for(const a of [[],['x'],["x'"],['x2'],['z'],["z'"]])for(const b of [[],['y'],["y'"],['y2']]){const s=[...a,...b],c=simApply(simNew(),s);
+    const k=JSON.stringify([c.find(cb=>eq(cb.home,[0,1,0])).pos,c.find(cb=>eq(cb.home,[0,0,1])).pos]);if(!seen.has(k)){seen.add(k);out.push(s)}}
+  return out.sort((p,q)=>p.length-q.length)})();
+
+// =====================================================================
+// Drill
+// =====================================================================
+const dispName=cs=>cs.kind.toUpperCase()+' · '+(cs.kind==='pll'?cs.name:cs.name.replace('Caso ',''));
+const F2LMASK=cb=>cb.home[1]===1;
+const drillMask=cs=>cs.kind==='f2l'?F2LMASK:cs.kind==='oll'?MASKS.oll:null;
+const DSETS=[
+ {id:'pll',name:'PLL · all 21',get:()=>PLL},
+ {id:'pll-2l',name:'PLL · 2-look (A, Y, U, H, Z)',get:()=>['a-horario','a-anti','y','u-horario','u-anti','h','z'].map(pllBy)},
+ {id:'pll-todo',name:'PLL · not learned yet',get:()=>PLL.filter(c=>!learned.has(c.id))},
+ {id:'oll',name:'OLL · all 57',get:()=>OLL},
+ {id:'oll-x',name:'OLL · cross done (01–07)',get:()=>OLL.slice(0,7)},
+ {id:'oll-todo',name:'OLL · not learned yet',get:()=>OLL.filter(c=>!learned.has(c.id))},
+ {id:'f2l',name:'F2L · all 41',get:()=>F2L},
+ {id:'f2l-todo',name:'F2L · not learned yet',get:()=>F2L.filter(c=>!learned.has(c.id))},
+ {id:'learned',name:'Everything marked learned',get:()=>[...F2L,...OLL,...PLL].filter(c=>learned.has(c.id))}];
+const D={set:store.get('cubo-dset','pll'),mode:store.get('cubo-dmode','exec'),cur:null,prev:null,
+  stats:store.get('cubo-dstats',{exec:{},recog:{}}),waitNext:false,shownAt:0,ansFor:null};
+if(!DSETS.some(s=>s.id===D.set))D.set='pll';
+const curSet=()=>DSETS.find(s=>s.id===D.set);
+const avgLast=s=>s&&s.t.length?s.t.slice(-5).reduce((a,b)=>a+b,0)/Math.min(5,s.t.length):null;
+function dRecord(mode,id,t,ok){const s=D.stats[mode][id]||(D.stats[mode][id]={t:[],best:null,n:0,ok:0});s.n++;
+  if(ok!==false){s.ok++;s.t.push(Math.round(t));if(s.t.length>12)s.t.shift();if(s.best==null||t<s.best)s.best=Math.round(t)}
+  store.set('cubo-dstats',D.stats)}
+function pickCase(list){const st=D.stats[D.mode];const avgs=list.map(c=>avgLast(st[c.id]));const known=avgs.filter(a=>a!=null);
+  const g=known.length?known.reduce((a,b)=>a+b,0)/known.length:1;
+  const w=list.map((c,i)=>{if(list.length>1&&D.cur&&c.id===D.cur.cs.id)return 0;const a=avgs[i];
+    let x=a==null?3:Math.min(4,Math.max(0.3,(a/g)**2));const s=st[c.id];if(s&&s.n&&s.ok<s.n)x+=3*(1-s.ok/s.n);return x});
+  let r=Math.random()*w.reduce((a,b)=>a+b,0);for(let i=0;i<list.length;i++){r-=w[i];if(r<=0)return list[i]}return list[list.length-1]}
+function buildRound(cs){const auf=AUF[Math.floor(Math.random()*4)];
+  const scr=faceOnly([...cs.setup,...auf]),start=simApply(simNew(),scr);let rr=[];
+  for(const o of ORIENTS)if(relOK(simApply(clone(start),[...o,...invSeq(auf),...cs.alg]),()=>true)){rr=o;break}
+  const segs=[];if(rr.length)segs.push({label:'Re-grip',moves:rr});if(auf.length)segs.push({label:'AUF',moves:invSeq(auf)});
+  segs.push({label:dispName(cs),moves:cs.alg});return{cs,scr,segs}}
+function dLoadHidden(){if(!D.cur)return;
+  playerLoad({id:'drill',eyebrow:curSet().name,name:'?',sub:D.mode==='exec'?'Solve it on your cube, then stop the timer':'Which case is this? Drag to look around.',
+    hud:D.mode==='exec'?'Hidden until you stop the timer':'Recognise the case',dia:'',setup:D.cur.scr,segs:[],mask:drillMask(D.cur.cs)},{nav:false})}
+function dLoadReveal(r,{autoplay=false}={}){
+  playerLoad({id:'drill-r',eyebrow:'Solution',name:dispName(r.cs),sub:r.cs.text,dia:diagramFor(r.cs),setup:r.scr,segs:r.segs,mask:drillMask(r.cs)},{nav:false,autoplay})}
+function drillNew({reveal=null}={}){
+  const list=curSet().get();D.waitNext=false;
+  if(!list.length){D.cur=null;$('dScr').textContent='This set is empty. Pick another set, or mark cases as learned on the F2L, OLL and PLL pages.';
+    $('dMsg').textContent='';$('dMsg').className='rmsg';$('dAns').innerHTML='';
+    playerLoad({id:'drill',eyebrow:curSet().name,name:'No cases',sub:'',hud:'',dia:'',setup:[],segs:[]},{nav:false});renderDStats();return}
+  D.cur=buildRound(pickCase(list));
+  $('dScrH').textContent=reveal?'Next case · scramble':'Scramble for this case';$('dScr').textContent=D.cur.scr.join(' ');
+  if(reveal)dLoadReveal(reveal);else dLoadHidden();
+  if(D.mode==='recog'){renderAnswers();$('dMsg').textContent='Click the case you see.';$('dMsg').className='rmsg';D.shownAt=performance.now()}
+  renderDStats()}
+function renderAnswers(){const list=curSet().get(),key=D.set+':'+list.length;
+  if(D.ansFor!==key){D.ansFor=key;const g=$('dAns');g.innerHTML='';
+    list.forEach(cs=>{const b=document.createElement('button');b.className='pk';b.dataset.id=cs.id;
+      b.innerHTML=diagramFor(cs)+`<span>${cs.kind==='pll'?cs.name:cs.name.replace('Caso ','')}</span>`;b.onclick=()=>drillAnswer(cs.id);g.appendChild(b)})}
+  document.querySelectorAll('#dAns .pk').forEach(b=>b.classList.remove('ok','bad'))}
+function drillAnswer(id){if(D.waitNext||!D.cur)return;const cs=D.cur.cs,ok=id===cs.id,t=performance.now()-D.shownAt;
+  dRecord('recog',cs.id,t,ok);D.waitNext=true;
+  document.querySelector(`#dAns .pk[data-id="${cs.id}"]`).classList.add('ok');
+  const m=$('dMsg');
+  if(ok){m.className='rmsg ok';m.textContent=`✓ ${dispName(cs)} · ${fmt(t)}`;renderDStats();setTimeout(()=>{if(D.waitNext&&route.view==='drill')drillNew()},750)}
+  else{document.querySelector(`#dAns .pk[data-id="${id}"]`).classList.add('bad');
+    m.className='rmsg bad';m.innerHTML=`✗ It was ${dispName(cs)}. <button class="t sq" id="dNext">Next case (space)</button>`;$('dNext').onclick=()=>drillNew();
+    dLoadReveal(D.cur);renderDStats()}}
+function renderDStats(){const list=curSet().get(),mode=D.mode,st=D.stats[mode],el=$('dStats');
+  if(!list.length){el.innerHTML='<div class="empty">No cases in this set.</div>';return}
+  const rows=list.map(c=>({c,s:st[c.id],a:avgLast(st[c.id])}));
+  const done=rows.filter(r=>r.s&&r.s.n),todo=rows.filter(r=>!(r.s&&r.s.n));
+  done.sort((p,q)=>mode==='recog'?((p.s.ok/p.s.n)-(q.s.ok/q.s.n))||((q.a||0)-(p.a||0)):(q.a||0)-(p.a||0));
+  const max=Math.max(1,...done.map(r=>r.a||0));
+  const mean=done.filter(r=>r.a!=null);const mt=mean.length?mean.reduce((a,r)=>a+r.a,0)/mean.length:null;
+  let h=`<div class="dsum">${done.length} of ${list.length} practised${mt!=null?` · mean ${fmt(mt)}`:''}. ${mode==='exec'?'Slowest first.':'Least accurate first.'}</div><div class="dstats">`;
+  h+=mode==='exec'?`<div class="drow h"><span>Case</span><span>n</span><span>ao5</span><span>best</span><span class="bh"></span></div>`
+    :`<div class="drow h"><span>Case</span><span>n</span><span>correct</span><span>avg</span><span class="bh"></span></div>`;
+  for(const r of done){const w=r.a?Math.round(r.a/max*100):0;
+    h+=mode==='exec'?`<div class="drow"><span class="nm">${dispName(r.c)}</span><span class="mu">${r.s.n}</span><span>${fmt(r.a)}</span><span class="mu">${fmt(r.s.best)}</span><span class="dbar"><i style="width:${w}%"></i></span></div>`
+      :`<div class="drow"><span class="nm">${dispName(r.c)}</span><span class="mu">${r.s.n}</span><span>${Math.round(r.s.ok/r.s.n*100)}%</span><span class="mu">${fmt(r.a)}</span><span class="dbar"><i style="width:${w}%"></i></span></div>`}
+  if(todo.length)h+=`<div class="drow"><span class="nm" style="color:var(--muted);font-weight:600">Not practised: ${todo.map(r=>dispName(r.c).split(' · ')[1]).join(', ')}</span></div>`;
+  el.innerHTML=h+'</div>'}
+function syncDrillUI(){$('dSet').value=D.set;$('dmExec').setAttribute('aria-pressed',D.mode==='exec');$('dmRec').setAttribute('aria-pressed',D.mode==='recog');
+  $('dExec').hidden=D.mode!=='exec';$('dRec').hidden=D.mode!=='recog'}
+function drillEnter(){syncDrillUI();if(!D.cur)drillNew();else if(D.mode==='exec'&&D.prev)dLoadReveal(D.prev);else dLoadHidden();
+  if(D.mode==='recog'&&D.cur){renderAnswers();D.shownAt=performance.now()}renderDStats()}
+$('dSet').innerHTML=DSETS.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+$('dSet').onchange=e=>{D.set=e.target.value;store.set('cubo-dset',D.set);dtCancel();D.prev=null;$('dRes').innerHTML='';drillNew()};
+function setDMode(m){D.mode=m;store.set('cubo-dmode',m);dtCancel();D.prev=null;$('dRes').innerHTML='';syncDrillUI();drillNew()}
+$('dmExec').onclick=()=>setDMode('exec');$('dmRec').onclick=()=>setDMode('recog');
+$('dCopy').onclick=async e=>{const b=e.currentTarget;b.blur();try{await navigator.clipboard.writeText($('dScr').textContent);b.textContent='Copied'}catch(err){
+  const r=document.createRange();r.selectNodeContents($('dScr'));const sel=getSelection();sel.removeAllRanges();sel.addRange(r);b.textContent='Selected'}setTimeout(()=>b.textContent='Copy',1400)};
+let dResetArm=null;
+$('dReset').onclick=e=>{const b=e.currentTarget;b.blur();
+  if(dResetArm){clearTimeout(dResetArm);dResetArm=null;curSet().get().forEach(c=>delete D.stats[D.mode][c.id]);store.set('cubo-dstats',D.stats);b.textContent='Reset stats';renderDStats();return}
+  b.textContent='Tap again to reset';dResetArm=setTimeout(()=>{dResetArm=null;b.textContent='Reset stats'},2500)};
+
+// drill timer
+const DT={state:'idle',t0:0,hold:null};
+const dClock=$('dClock');
+function setDClock(txt,cls){dClock.textContent=txt;dClock.className='clock dclock'+(cls?' '+cls:'')}
+function dtDown(){if(D.mode!=='exec'||!D.cur)return;
+  if(DT.state==='running'){drillStop();DT.state='stopped';return}
+  if(DT.state==='idle'){DT.state='holding';setDClock(fmt(0),'hold');DT.hold=setTimeout(()=>{if(DT.state==='holding'){DT.state='ready';setDClock(fmt(0),'ready')}},250)}}
+function dtUp(){if(DT.state==='stopped'){DT.state='idle';return}
+  if(DT.state==='holding'){clearTimeout(DT.hold);DT.state='idle';setDClock('0.00');return}
+  if(DT.state==='ready'){DT.state='running';DT.t0=performance.now();dLoadHidden();$('dScrH').textContent='Scramble for this case';dTick()}}
+function dTick(){if(DT.state==='running'){setDClock(fmt(performance.now()-DT.t0));requestAnimationFrame(dTick)}}
+function dtCancel(){clearTimeout(DT.hold);DT.state='idle';setDClock('0.00')}
+function drillStop(){const t=performance.now()-DT.t0,r=D.cur;setDClock(fmt(t));dRecord('exec',r.cs.id,t);D.prev=r;
+  $('dRes').innerHTML=`<div class="dlast"><span class="eyebrow">Last case</span><b>${dispName(r.cs)}</b><span class="dtime">${fmt(t)}</span><button class="t sq" id="dWatch">▶ Watch solution</button></div><div class="dalg">${r.cs.text}</div>`;
+  $('dWatch').onclick=e=>{e.currentTarget.blur();dLoadReveal(r,{autoplay:true})};
+  drillNew({reveal:r})}
+const dPad=$('dPad');
+dPad.addEventListener('pointerdown',e=>{if(e.button)return;e.preventDefault();dPad.setPointerCapture(e.pointerId);dtDown()});
+dPad.addEventListener('pointerup',e=>{e.preventDefault();dtUp()});
+dPad.addEventListener('pointercancel',()=>{if(DT.state!=='running')dtCancel()});
+document.addEventListener('pointerdown',e=>{if(route.view==='drill'&&DT.state==='running'&&!dPad.contains(e.target)){drillStop();DT.state='stopped'}},true);
+document.addEventListener('pointerup',()=>{if(route.view==='drill'&&DT.state==='stopped')DT.state='idle'},true);
+
+// =====================================================================
+// Cross trainer: exact distance table over the 4 white edges (190,080 states)
+// =====================================================================
+let CRS=null;
+function crossTables(){if(CRS)return CRS;
+  const EP=[];for(let x=-1;x<=1;x++)for(let y=-1;y<=1;y++)for(let z=-1;z<=1;z++)if(Math.abs(x)+Math.abs(y)+Math.abs(z)===2)EP.push([x,y,z]);
+  const nrm=p=>[0,1,2].filter(i=>p[i]).map(i=>{const n=[0,0,0];n[i]=p[i];return n});
+  const idxOf=(p,n)=>{const i=EP.findIndex(q=>eq(q,p));return i*2+(eq(nrm(p)[0],n)?0:1)};
+  const MOVES=[];for(const f of 'UDRLFB')for(const s of ['',"'",'2'])MOVES.push(f+s);
+  const MT=MOVES.map(m=>{const {ax,ls,s,n}=parse(m);const t=new Int8Array(24);
+    for(let i=0;i<24;i++){let p=EP[i>>1],q=nrm(p)[i&1];if(ls.includes(p[ax]))for(let k=0;k<n;k++){p=R(ax,s,p);q=R(ax,s,q)}t[i]=idxOf(p,q)}return t});
+  const solved=[[0,-1,1],[1,-1,0],[0,-1,-1],[-1,-1,0]].map(h=>idxOf(h,[0,-1,0]));
+  const enc=a=>((a[0]*24+a[1])*24+a[2])*24+a[3];
+  const dist=new Uint8Array(331776).fill(255),q=new Int32Array(190080);let h=0,tl=0;const s0=enc(solved);dist[s0]=0;q[tl++]=s0;
+  while(h<tl){const s=q[h++],a0=Math.floor(s/13824),a1=Math.floor(s/576)%24,a2=Math.floor(s/24)%24,a3=s%24,d=dist[s];
+    for(let i=0;i<18;i++){const t=MT[i],e=((t[a0]*24+t[a1])*24+t[a2])*24+t[a3];if(dist[e]===255){dist[e]=d+1;q[tl++]=e}}}
+  const MI={};MOVES.forEach((m,i)=>MI[m]=i);
+  const stateOf=seq=>{const a=[...solved];for(const m of seq){const t=MT[MI[m]];for(let k=0;k<4;k++)a[k]=t[a[k]]}return a};
+  const COST={U:0,D:0,R:0,F:0.3,L:0.8,B:2.5},OPPF={U:'D',D:'U',R:'L',L:'R',F:'B',B:'F'};
+  function solutions(a,keep=4,limit=400){const out=[],path=[];
+    (function dfs(a,d){if(out.length>=limit)return;if(d===0){out.push([...path]);return}
+      for(let i=0;i<18;i++){const m=MOVES[i],lf=path.length?path[path.length-1][0]:'';
+        /* skip same face, and commuting opposite pairs in the second order */
+        if(m[0]===lf||(OPPF[m[0]]===lf&&'URF'.includes(m[0])))continue;
+const t=MT[i],b=[t[a[0]],t[a[1]],t[a[2]],t[a[3]]];
+        if(dist[enc(b)]===d-1){path.push(m);dfs(b,d-1);path.pop()}}})(a,dist[enc(a)]);
+    return out.map(s=>({s,c:s.reduce((x,m)=>x+COST[m[0]],0)})).sort((p,q)=>p.c-q.c).slice(0,keep).map(o=>o.s)}
+  return CRS={dist,enc,stateOf,solutions}}
+const X={scr:null,opt:null,sols:null,sel:0,revealed:false,diff:store.get('cubo-xdiff','any'),showLen:store.get('cubo-xlen',false),plan:null};
+const crossDone=c=>relOK(c,h=>h[1]===-1&&Math.abs(h[0])+Math.abs(h[2])===1);
+function crossNew(){const C=crossTables(),target=X.diff==='any'?null:+X.diff;let scr,d,tries=0;
+  do{scr=genScramble();d=C.dist[C.enc(C.stateOf(scr))];tries++}while(target!=null&&d!==target&&tries<200000);
+  Object.assign(X,{scr,opt:d,sols:null,sel:0,revealed:false});$('xIn').value='';xMsg('');stopPlan();crossRender()}
+function xMsg(t,good){const m=$('xMsg');m.textContent=t;m.className='ferr'+(good?' good':'')}
+function crossRender(){
+  $('xScr').textContent=X.scr.join(' ');
+  $('xInfo').innerHTML=X.revealed||X.showLen?`Shortest white cross: <b>${X.opt} move${X.opt===1?'':'s'}</b>.`:'Plan the whole cross before you turn.';
+  $('xShow').textContent=X.revealed?'Hide answer':'Show answer';
+  const box=$('xSols');box.innerHTML='';
+  if(X.revealed){X.sols.forEach((s,i)=>{const b=document.createElement('button');b.className='xsol'+(i===X.sel?' on':'');
+      b.innerHTML=`${s.join(' ')}<span>${s.length} moves</span>`;b.onclick=()=>{X.sel=i;crossRender();crossPlay(s,'Shortest cross',true)};box.appendChild(b)});
+    crossPlay(X.sols[X.sel],'Shortest cross',false)}
+  else playerLoad({id:'cross',eyebrow:'Cross trainer',name:'Plan the white cross',sub:X.showLen?`Shortest: ${X.opt} moves`:'',
+    hud:'Only the cross pieces are coloured',dia:'',setup:X.scr,segs:[],mask:MASKS.cross},{nav:false})}
+function crossPlay(moves,label,autoplay){playerLoad({id:'cross',eyebrow:'Cross trainer',name:`${label} · ${moves.length} moves`,sub:moves.join(' '),dia:'',
+  setup:X.scr,segs:[{label:'',moves}],mask:MASKS.cross},{nav:false,autoplay})}
+function crossEnter(){$('xDiff').value=X.diff;$('xShowLen').checked=X.showLen;if(!X.scr)crossNew();else crossRender()}
+$('xNew').onclick=e=>{e.currentTarget.blur();crossNew()};
+$('xDiff').onchange=e=>{X.diff=e.target.value;store.set('cubo-xdiff',X.diff);crossNew()};
+$('xShowLen').onchange=e=>{X.showLen=e.target.checked;store.set('cubo-xlen',X.showLen);if(!X.revealed)crossRender()};
+$('xShow').onclick=e=>{e.currentTarget.blur();if(X.revealed){X.revealed=false}else{X.sols=X.sols||crossTables().solutions(crossTables().stateOf(X.scr));X.sel=0;X.revealed=true}
+  crossRender();if(X.revealed)crossPlay(X.sols[0],'Shortest cross',true)};
+$('xCheck').onclick=()=>{const raw=$('xIn').value;if(!raw.trim()){xMsg('Type the moves you used, for example D R\' F2 L\'.');return}
+  const r=parseMoves(raw);if(r.err){xMsg(`“${r.err.slice(0,12)}” isn't a move. Use R L U D F B with ' or 2.`);return}
+  const c=simApply(simApply(simNew(),X.scr),r.moves),n=r.moves.filter(m=>!isRot(m)).length;
+  if(!crossDone(c)){xMsg(`Those ${n} moves don't finish the white cross. Watch them on the cube to see where it goes wrong.`);crossPlay(r.moves,'Your moves',true);return}
+  xMsg(n===X.opt?`Optimal! ${n} moves, the shortest possible.`:`That solves the cross in ${n} moves. The shortest is ${X.opt}.`,true);
+  $('xInfo').innerHTML=`Shortest white cross: <b>${X.opt} move${X.opt===1?'':'s'}</b>.`;crossPlay(r.moves,'Your cross',true)};
+$('xIn').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('xCheck').click()}});
+function stopPlan(){if(X.plan){clearInterval(X.plan);X.plan=null}$('xPlan').textContent='Plan · 15 s'}
+$('xPlan').onclick=e=>{const b=e.currentTarget;b.blur();if(X.plan){stopPlan();return}const t0=Date.now();
+  const upd=()=>{const left=15-Math.floor((Date.now()-t0)/1000);if(left<=0){stopPlan();b.textContent='Time! Solve it';setTimeout(()=>{if(!X.plan)b.textContent='Plan · 15 s'},2500);return}b.textContent=`${left} s · stop`};
+  X.plan=setInterval(upd,250);upd()};
+
+// =====================================================================
 // Keyboard + routing
 // =====================================================================
 addEventListener('keydown',e=>{
-  if(e.target.tagName==='TEXTAREA'||(e.target.tagName==='INPUT'&&e.target.type!=='checkbox'))return;
+  if(e.target.tagName==='TEXTAREA'||e.target.tagName==='SELECT'||(e.target.tagName==='INPUT'&&e.target.type!=='checkbox'))return;
+  if(route.view==='drill'&&D.mode==='exec'){
+    if(e.key==='Escape'){dtCancel();return}
+    if(DT.state==='running'&&!['Shift','Control','Alt','Meta'].includes(e.key)){e.preventDefault();dtDown();return}
+    if(e.code==='Space'){e.preventDefault();if(!e.repeat)dtDown();return}}
+  if(route.view==='drill'&&D.mode==='recog'&&D.waitNext&&(e.code==='Space'||e.key==='Enter')){e.preventDefault();drillNew();return}
   if(route.view==='timer'){
     if(e.key==='Escape'){tCancel();return}
     if(T.state==='running'&&!['Shift','Control','Alt','Meta'].includes(e.key)){e.preventDefault();tDown();return}
@@ -1018,15 +1336,18 @@ addEventListener('keydown',e=>{
   else if(e.key==='r'||e.key==='R'){P.playing=false;setupAt(0);pui()}
   else if(e.key==='['){P.ctx&&P.ctx(-1)}else if(e.key===']'){P.ctx&&P.ctx(1)}
 });
-addEventListener('keyup',e=>{if(route.view==='timer'&&(e.code==='Space'||T.state==='stopped')){e.preventDefault();tUp()}});
+addEventListener('keyup',e=>{if(route.view==='drill'&&D.mode==='exec'&&(e.code==='Space'||DT.state==='stopped')&&!/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)){e.preventDefault();dtUp();return}
+  if(route.view==='timer'&&(e.code==='Space'||T.state==='stopped')){e.preventDefault();tUp()}});
 
 const route={view:null};
-const VIEWS=['timer','beginner','cfop','f2l','oll','pll','notation','moves'];
+const VIEWS=['timer','drill','cross','beginner','cfop','f2l','oll','pll','notation','moves'];
 let lastHash='';
 function setHash(h){lastHash='#'+h;try{history.replaceState(null,'','#'+h)}catch(e){}}
 function go(hash,{fromHash=false}={}){
   const h=(hash||'').replace(/^#/,'');const view=VIEWS.find(v=>h===v||h.startsWith(v+'-'))||(h.startsWith('beg-')?'beginner':'timer');
   if(route.view==='timer'&&view!=='timer')tCancel();
+  if(route.view==='drill'&&view!=='drill')dtCancel();
+  if(route.view==='cross'&&view!=='cross')stopPlan();
   if(P.item&&P.item.id==='pg')pgBase=pgApplied();
   route.view=view;
   VIEWS.forEach(v=>$('v-'+v).hidden=v!==view);
@@ -1038,6 +1359,8 @@ function go(hash,{fromHash=false}={}){
     const L=LIB[view];const k=L.cases.findIndex(c=>c.id===h);selectCase(view,k>=0?k:L.cur,{push:false});
   }else if(view==='beginner'){makeBegThumbs();const d=BEGALL.find(x=>x.id===h);selectBeg(d||begCur,{push:false})}
   else if(view==='moves'){pgLoad(pgBase,[])}
+  else if(view==='drill'){makeF2LThumbs();drillEnter()}
+  else if(view==='cross'){crossEnter()}
   else if(view==='notation'){selectNot(notCur,{autoplay:false})}
   else if(view==='timer'){setClock(solves.length?fmt(val(solves[solves.length-1])):'0.00')}
   if(!fromHash)setHash(h&&h!==view&&!VIEWS.includes(h)?h:view);
